@@ -2,6 +2,19 @@
 # 每个长尾关键词一页,共享模板;改 PAGES 后重跑 + wrangler 部署即可。
 import html, pathlib
 
+# 站点统计(可选):site/ga.txt(gitignored)放一行 GA 的 measurement ID(如 G-XXXX)。
+# 不存在则输出零跟踪器页面——fork 部署者默认不带任何分析代码。
+_ga_file = pathlib.Path(__file__).parent / "ga.txt"
+_ga_id = _ga_file.read_text().strip() if _ga_file.exists() else ""
+ANALYTICS = ("""<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=%s"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '%s');
+</script>""" % (_ga_id, _ga_id)) if _ga_id else ""
+
 BASE = "https://runcast.app"
 GH = "https://github.com/paceboy/listenwhilerunning"
 DEMO = "https://demo.runcast.app"
@@ -54,14 +67,7 @@ def render(p, all_pages):
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XZYYL861EF"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){{dataLayer.push(arguments);}}
-  gtag('js', new Date());
-  gtag('config', 'G-XZYYL861EF');
-</script>
+{ANALYTICS}
 
 <title>{html.escape(p["title"])}</title>
 <meta name="description" content="{html.escape(p["desc"])}">
@@ -489,3 +495,10 @@ sm += "".join(f"  <url><loc>{u}</loc></url>\n" for u in urls) + "</urlset>\n"
 (out / "sitemap.xml").write_text(sm, encoding="utf8")
 (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {BASE}/sitemap.xml\n", encoding="utf8")
 print("wrote sitemap.xml, robots.txt")
+
+# 手写页(首页/中文页):templates/ 里的 <!--ANALYTICS--> 占位符替换后输出
+tpl_dir = pathlib.Path(__file__).parent / "templates"
+for name in ["index.html", "zh.html"]:
+    t = (tpl_dir / name).read_text(encoding="utf8").replace("<!--ANALYTICS-->", ANALYTICS)
+    (out / name).write_text(t, encoding="utf8")
+    print("wrote", name)

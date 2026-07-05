@@ -156,3 +156,5 @@ demo-player/
 docs/config.js
 # setup 按用户环境生成,内含个人项目名
 wrangler.toml
+site/public/
+site/ga.txt
