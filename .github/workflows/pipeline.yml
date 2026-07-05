@@ -1,0 +1,39 @@
+# 每日资讯管线(fork 即用,无需服务器):
+# 1. fork 本仓库后,在 Settings → Secrets and variables → Actions 里配置下面用到的 secrets
+# 2. Settings → Secrets and variables → Actions → Variables 加 ENABLE_PIPELINE=true 开启定时
+#    (不加则只能手动触发,避免没配 secrets 的 fork 每晚白跑报错)
+# 存储二选一:R2 三件套 或 SUPABASE 两件套;LLM_API_KEY 不配则降级为原文直读。
+name: daily-pipeline
+
+on:
+  schedule:
+    - cron: "30 22 * * *" # UTC,北京时间早上 06:30
+  workflow_dispatch:
+
+# 防同组任务重叠运行(与 src/lock.ts 的本机锁互补)
+concurrency:
+  group: lwr-feed
+  cancel-in-progress: false
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_PIPELINE == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run pipeline
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+          R2_PUBLIC_BASE: ${{ secrets.R2_PUBLIC_BASE }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

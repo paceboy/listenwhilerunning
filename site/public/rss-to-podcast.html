@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RSS to Podcast: Listen to Your Feeds as a Daily AI Podcast</title>
+<meta name="description" content="Convert RSS feeds into a private podcast automatically. An open-source pipeline rewrites your subscriptions into a two-host AI dialogue show and delivers it to Apple Podcasts every morning, for about $0/month.">
+<link rel="canonical" href="https://lwr-site.pages.dev/rss-to-podcast">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I convert a single article instead of a whole feed?","acceptedAnswer":{"@type":"Answer","text":"Yes. Paste any article URL into the player's settings page (or run one command) and it becomes an episode within minutes, without counting against the daily quota."}},{"@type":"Question","name":"Does it work with newsletters?","acceptedAnswer":{"@type":"Answer","text":"If your newsletter has an RSS feed (most Substack and Ghost publications do), yes — add the feed URL and issues arrive as episodes."}},{"@type":"Question","name":"Will the AI hosts make things up?","acceptedAnswer":{"@type":"Answer","text":"Dialogue scripts are limited to the fetched article text and each episode cites its source. For factual precision you can always tap through to the original link kept in the episode notes."}}]}</script>
+<style>
+:root{--bg:#0b0f17;--card:#131a26;--card2:#1a2333;--line:#233047;--text:#e6ecf5;--dim:#8b98ac;--acc:#35d399;--acc2:#22d3ee}
+@media (prefers-color-scheme:light){:root{--bg:#f7f9fc;--card:#fff;--card2:#eef2f8;--line:#dbe3ee;--text:#16202e;--dim:#5b687a}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.8}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px 60px}
+nav{display:flex;justify-content:space-between;padding:14px 0;font-size:.85em}
+nav a{color:var(--dim);text-decoration:none;margin-left:14px}
+nav .brand{color:var(--acc);font-weight:700;margin:0}
+h1{font-size:1.7em;line-height:1.4;margin:28px 0 6px}
+.lede{color:var(--dim);margin-bottom:26px}
+h2{font-size:1.2em;margin:30px 0 10px}
+p{margin-bottom:14px}
+ol,ul{margin:0 0 14px 22px}
+li{margin-bottom:6px}
+code{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:.9em}
+.cta{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:26px 0}
+.cta a.b{display:inline-block;padding:10px 22px;border-radius:10px;font-weight:600;text-decoration:none;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#08110c;margin-right:8px}
+.cta a.g{display:inline-block;padding:10px 22px;border-radius:10px;border:1px solid var(--line);color:var(--text);text-decoration:none}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600}
+details p{color:var(--dim);font-size:.93em;margin:8px 0 0}
+footer{border-top:1px solid var(--line);padding-top:20px;color:var(--dim);font-size:.85em}
+footer a{color:var(--acc2);margin-right:10px}
+a{color:var(--acc2)}
+</style>
+</head>
+<body><div class="wrap">
+<nav><a class="brand" href="/">listenwhilerunning</a><span><a href="https://lwr-demo.pages.dev">Demo</a><a href="https://github.com/paceboy/listenwhilerunning">GitHub</a><a href="/zh">中文</a></span></nav>
+<h1>RSS to Podcast: Turn Your Feeds into a Daily AI Show</h1>
+<p class="lede">You already curated the perfect reading list — newsletters, subreddits, blogs. The problem is finding time to read it. Converting RSS to a podcast lets you consume your backlog on runs and commutes, hands-free.</p>
+
+<h2>Why convert RSS to a podcast at all?</h2>
+<p>Text-to-speech apps can read one article at a time, but that's not how listening works. What you actually want is a <em>feed</em>: wake up, open your podcast app, and today's episodes from your own sources are just there — queued, resumable, playable on a lock screen. That requires a pipeline, not a button.</p>
+<h2>How listenwhilerunning does it</h2>
+<ol>
+<li><b>Fetch:</b> every morning the pipeline pulls new items from your RSS feeds (any feed works: blogs, subreddits, Hacker News, newsletters via their RSS).</li>
+<li><b>Rewrite:</b> an LLM turns each article into a short two-host dialogue — question, pushback, summary — instead of a monotone readout. Short summary feeds get enriched by fetching the full article page.</li>
+<li><b>Synthesize & publish:</b> neural TTS renders the dialogue with two distinct voices, and everything is published to a standard, private podcast RSS feed.</li>
+</ol>
+<p>Any podcast app that supports "follow by URL" (Apple Podcasts, Pocket Casts, Overcast) subscribes to your feed once and receives new episodes forever. There's no app to install and no platform in the middle.</p>
+<h2>What it costs</h2>
+<p>The pipeline is open source and runs on Cloudflare's free tier (R2 storage with free egress). The only variable cost is LLM rewriting — typically a few cents per day for 8 episodes — and even that is optional: without an LLM key, episodes fall back to plain readout.</p>
+
+<div class="cta"><b>listenwhilerunning</b> is open source (AGPL-3.0) and runs on your own free-tier accounts.<br><br>
+<a class="b" href="https://github.com/paceboy/listenwhilerunning">Get it on GitHub →</a> <a class="g" href="https://lwr-demo.pages.dev">Live demo</a> <a class="g" href="/#waitlist">Hosted version waitlist</a></div>
+<h2>FAQ</h2>
+<details><summary>Can I convert a single article instead of a whole feed?</summary><p>Yes. Paste any article URL into the player's settings page (or run one command) and it becomes an episode within minutes, without counting against the daily quota.</p></details>
+<details><summary>Does it work with newsletters?</summary><p>If your newsletter has an RSS feed (most Substack and Ghost publications do), yes — add the feed URL and issues arrive as episodes.</p></details>
+<details><summary>Will the AI hosts make things up?</summary><p>Dialogue scripts are limited to the fetched article text and each episode cites its source. For factual precision you can always tap through to the original link kept in the episode notes.</p></details>
+<footer><p>More guides: <a href="/epub-to-audiobook">Epub to audiobook</a> <a href="/notebooklm-alternative">NotebookLM alternative</a> <a href="/self-hosted-podcast-generator">Self-hosted generator</a> <a href="/listen-to-articles-while-running">Listen while running</a> <a href="/ai-audiobook-generator">AI audiobook generator</a> <a href="/convert-book-to-audiobook">Convert book to audiobook</a> <a href="/self-hosted-notebooklm">Self-hosted NotebookLM</a> <a href="/what-to-listen-to-while-running">What to listen to running</a> <a href="/pdf-to-audiobook">PDF to audiobook</a> <a href="/epub-to-mp3">Epub to MP3</a> <a href="/free-audiobook-maker">Free audiobook maker</a> <a href="/audiobooks-for-running">Audiobooks for running</a> <a href="/notebooklm-open-source">NotebookLM open source</a> <a href="/notebooklm-audio-overview">Audio Overview explained</a></p>
+<p><a href="/">listenwhilerunning</a> — turn your RSS feeds and ebooks into a personal podcast. Open source, ~$0/mo.</p></footer>
+</div></body></html>

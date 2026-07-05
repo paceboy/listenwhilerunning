@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Audiobook Generator — Free, Open Source, Neural Voices</title>
+<meta name="description" content="Generate audiobooks from your ebooks with an AI pipeline: neural voices, chapter-sized episodes, per-episode summaries, and an AI hosts&#x27; intro discussing the book. Free and open source.">
+<link rel="canonical" href="https://lwr-site.pages.dev/ai-audiobook-generator">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Which input formats work?","acceptedAnswer":{"@type":"Answer","text":"epub, txt, and html directly; mobi/azw3 convert to epub with one click in Calibre."}},{"@type":"Question","name":"Can it generate the audiobook in a different language than the book?","acceptedAnswer":{"@type":"Answer","text":"Yes — there's a whole-book translation command, e.g. listen to an English book as a Chinese audiobook. Voice selection follows the output language automatically."}},{"@type":"Question","name":"How does it compare to paid audiobook generator apps?","acceptedAnswer":{"@type":"Answer","text":"Paid apps rent you the pipeline; this one is AGPL open source and runs on your own accounts, so there's no subscription and no service that can shut down and take your library with it."}}]}</script>
+<style>
+:root{--bg:#0b0f17;--card:#131a26;--card2:#1a2333;--line:#233047;--text:#e6ecf5;--dim:#8b98ac;--acc:#35d399;--acc2:#22d3ee}
+@media (prefers-color-scheme:light){:root{--bg:#f7f9fc;--card:#fff;--card2:#eef2f8;--line:#dbe3ee;--text:#16202e;--dim:#5b687a}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.8}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px 60px}
+nav{display:flex;justify-content:space-between;padding:14px 0;font-size:.85em}
+nav a{color:var(--dim);text-decoration:none;margin-left:14px}
+nav .brand{color:var(--acc);font-weight:700;margin:0}
+h1{font-size:1.7em;line-height:1.4;margin:28px 0 6px}
+.lede{color:var(--dim);margin-bottom:26px}
+h2{font-size:1.2em;margin:30px 0 10px}
+p{margin-bottom:14px}
+ol,ul{margin:0 0 14px 22px}
+li{margin-bottom:6px}
+code{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:.9em}
+.cta{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:26px 0}
+.cta a.b{display:inline-block;padding:10px 22px;border-radius:10px;font-weight:600;text-decoration:none;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#08110c;margin-right:8px}
+.cta a.g{display:inline-block;padding:10px 22px;border-radius:10px;border:1px solid var(--line);color:var(--text);text-decoration:none}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600}
+details p{color:var(--dim);font-size:.93em;margin:8px 0 0}
+footer{border-top:1px solid var(--line);padding-top:20px;color:var(--dim);font-size:.85em}
+footer a{color:var(--acc2);margin-right:10px}
+a{color:var(--acc2)}
+</style>
+</head>
+<body><div class="wrap">
+<nav><a class="brand" href="/">listenwhilerunning</a><span><a href="https://lwr-demo.pages.dev">Demo</a><a href="https://github.com/paceboy/listenwhilerunning">GitHub</a><a href="/zh">中文</a></span></nav>
+<h1>An AI Audiobook Generator You Actually Own</h1>
+<p class="lede">Commercial audiobook generators charge per book or per minute, and their catalog of voices is the product. An open-source pipeline flips that: you bring the book, the AI voices are free for personal use, and the result lands in your podcast app as a proper series.</p>
+
+<h2>What “generate an audiobook” should actually mean</h2>
+<p>Feeding a book through TTS is the easy part. What makes the result <em>listenable</em> is structure: chapter-sized episodes (~10 minutes) instead of one 10-hour file, a one-line AI summary on every episode so you can navigate, resume positions that survive app restarts, and delivery through standard podcast RSS so your existing app's speed controls and lock-screen support just work.</p>
+<h2>The intro episode: two AI hosts discuss the book</h2>
+<p>Before chapter one, the generator produces a bonus episode in which two hosts talk through what the book argues, who it's for, and what questions to keep in mind while listening. It works like a movie trailer for books — several times we've dropped a book after the intro and saved ten hours.</p>
+<h2>Speed: listen while it generates</h2>
+<p>Generation runs about 10x faster than playback. Upload an epub from your phone and the first episode is ready within minutes; a full 200-page book completes in 2–3 hours in the background while you're already listening.</p>
+<h2>Cost breakdown</h2>
+<p>Storage: Cloudflare R2 free tier (10GB holds dozens of books, egress is free). Voices: Microsoft neural TTS, free for personal use (swappable for ElevenLabs/Azure if you need commercial rights). Optional LLM for summaries and the intro episode: pennies per book. Total: approximately $0/month.</p>
+
+<div class="cta"><b>listenwhilerunning</b> is open source (AGPL-3.0) and runs on your own free-tier accounts.<br><br>
+<a class="b" href="https://github.com/paceboy/listenwhilerunning">Get it on GitHub →</a> <a class="g" href="https://lwr-demo.pages.dev">Live demo</a> <a class="g" href="/#waitlist">Hosted version waitlist</a></div>
+<h2>FAQ</h2>
+<details><summary>Which input formats work?</summary><p>epub, txt, and html directly; mobi/azw3 convert to epub with one click in Calibre.</p></details>
+<details><summary>Can it generate the audiobook in a different language than the book?</summary><p>Yes — there's a whole-book translation command, e.g. listen to an English book as a Chinese audiobook. Voice selection follows the output language automatically.</p></details>
+<details><summary>How does it compare to paid audiobook generator apps?</summary><p>Paid apps rent you the pipeline; this one is AGPL open source and runs on your own accounts, so there's no subscription and no service that can shut down and take your library with it.</p></details>
+<footer><p>More guides: <a href="/rss-to-podcast">RSS to podcast</a> <a href="/epub-to-audiobook">Epub to audiobook</a> <a href="/notebooklm-alternative">NotebookLM alternative</a> <a href="/self-hosted-podcast-generator">Self-hosted generator</a> <a href="/listen-to-articles-while-running">Listen while running</a> <a href="/convert-book-to-audiobook">Convert book to audiobook</a> <a href="/self-hosted-notebooklm">Self-hosted NotebookLM</a> <a href="/what-to-listen-to-while-running">What to listen to running</a> <a href="/pdf-to-audiobook">PDF to audiobook</a> <a href="/epub-to-mp3">Epub to MP3</a> <a href="/free-audiobook-maker">Free audiobook maker</a> <a href="/audiobooks-for-running">Audiobooks for running</a> <a href="/notebooklm-open-source">NotebookLM open source</a> <a href="/notebooklm-audio-overview">Audio Overview explained</a></p>
+<p><a href="/">listenwhilerunning</a> — turn your RSS feeds and ebooks into a personal podcast. Open source, ~$0/mo.</p></footer>
+</div></body></html>

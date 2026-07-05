@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0e0f13">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>跑步听什么</title>
+<style>
+  :root {
+    --bg: #0e0f13; --card: #171a21; --card2: #1d212b; --line: #262b36;
+    --text: #e8eaef; --dim: #8b91a0; --acc: #35d399; --acc2: #22d3ee;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, "PingFang SC", "HarmonyOS Sans SC", "MiSans", system-ui, sans-serif;
+    max-width: 560px; margin: 0 auto; padding: 0 14px calc(24px + env(safe-area-inset-bottom));
+    background: var(--bg); color: var(--text);
+  }
+  header { display: flex; align-items: baseline; gap: 10px; padding: 18px 2px 10px; }
+  h1 { font-size: 1.25em; margin: 0; letter-spacing: .02em; }
+  h1::before { content: "🏃"; margin-right: 8px; }
+  .sub { color: var(--dim); font-size: .78em; }
+  #langBtn { margin-left: auto; white-space: nowrap; flex: none; }
+
+  /* ---- 播放卡片 ---- */
+  .player {
+    position: sticky; top: 10px; z-index: 5;
+    background: linear-gradient(180deg, var(--card2), var(--card));
+    border: 1px solid var(--line); border-radius: 18px;
+    padding: 14px 16px 12px; box-shadow: 0 12px 30px rgba(0,0,0,.45);
+  }
+  .np-label { font-size: .7em; color: var(--acc); letter-spacing: .18em; }
+  .np-title {
+    font-size: .95em; line-height: 1.45; margin: 4px 0 2px; min-height: 2.8em;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .status { font-size: .75em; color: var(--dim); min-height: 1.2em; margin-bottom: 2px; }
+  .status.err { color: #f87171; }
+  .seekrow { display: flex; align-items: center; gap: 10px; font-size: .72em; color: var(--dim); font-variant-numeric: tabular-nums; }
+  #seek { flex: 1; accent-color: var(--acc); height: 4px; }
+  .controls { display: flex; align-items: center; justify-content: space-between; margin: 8px 6px 4px; }
+  .ctl {
+    background: none; border: 0; color: var(--text); width: 52px; height: 52px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: .8em; font-weight: 600; cursor: pointer;
+  }
+  .ctl:active { background: var(--card2); }
+  .ctl svg { width: 26px; height: 26px; fill: var(--text); }
+  .ctl.big {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, var(--acc), var(--acc2));
+    box-shadow: 0 6px 18px rgba(53,211,153,.35);
+  }
+  .ctl.big svg { width: 30px; height: 30px; fill: #06281c; }
+  .pills { display: flex; gap: 8px; justify-content: center; margin-top: 6px; }
+  .pill {
+    background: var(--card2); border: 1px solid var(--line); color: var(--dim);
+    padding: 5px 14px; border-radius: 999px; font-size: .75em; cursor: pointer;
+  }
+  .pill.on { color: var(--acc); border-color: var(--acc); }
+
+  /* ---- Tab ---- */
+  .tabs { display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 4px; margin: 16px 0 10px; }
+  .tabs button {
+    flex: 1; background: none; border: 0; color: var(--dim); padding: 9px 0;
+    border-radius: 9px; font-size: .9em; cursor: pointer;
+  }
+  .tabs button.on { background: var(--card2); color: var(--text); font-weight: 600; }
+
+  /* ---- 资讯列表 ---- */
+  ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  #list li {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 12px 14px; cursor: pointer;
+  }
+  #list li:active { background: var(--card2); }
+  #list li.playing { border-color: var(--acc); background: linear-gradient(180deg, rgba(53,211,153,.08), var(--card)); }
+  .t { display: block; font-size: .92em; line-height: 1.45; }
+  .m { display: flex; align-items: center; gap: 6px; font-size: .74em; color: var(--dim); margin-top: 6px; }
+  .src {
+    color: var(--acc); background: rgba(53,211,153,.1);
+    padding: 1px 8px; border-radius: 999px; font-size: .95em;
+  }
+  li.playing .t { color: var(--acc); }
+
+  /* ---- 书籍 ---- */
+  details.book { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
+  details.book summary { list-style: none; padding: 14px; cursor: pointer; }
+  details.book summary::-webkit-details-marker { display: none; }
+  details.book summary::after { content: "▾"; float: right; color: var(--dim); transition: transform .2s; }
+  details.book[open] summary::after { transform: rotate(180deg); }
+  .book h2 { display: inline; font-size: .95em; margin: 0; }
+  .book .prog { font-size: .74em; color: var(--dim); margin-top: 4px; }
+  .bbody { padding: 0 14px 14px; }
+  .resume {
+    display: block; width: 100%; margin: 0 0 10px; padding: 10px;
+    background: linear-gradient(135deg, rgba(53,211,153,.18), rgba(34,211,238,.12));
+    color: var(--acc); border: 1px solid rgba(53,211,153,.35); border-radius: 10px;
+    font-size: .85em; cursor: pointer;
+  }
+  .parts { gap: 0; }
+  .parts li { display: flex; align-items: baseline; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .parts li:last-child { border-bottom: 0; }
+  .parts .pn { flex: none; font-size: .78em; color: var(--dim); font-variant-numeric: tabular-nums; width: 3.6em; }
+  .parts .ps { flex: 1; font-size: .82em; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .parts .pm { flex: none; font-size: .72em; color: var(--dim); }
+  .parts li.playing .ps, .parts li.playing .pn { color: var(--acc); }
+  .empty { color: var(--dim); font-size: .85em; padding: 20px 4px; text-align: center; }
+  .ghead { padding: 14px 4px 4px; font-size: .8em; color: var(--acc); letter-spacing: .1em; border: 0; cursor: default; background: none; }
+
+  /* ---- 设置 ---- */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; position: relative; }
+  .card h2 { font-size: .92em; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+  .qm {
+    width: 18px; height: 18px; border-radius: 50%; padding: 0; line-height: 1;
+    border: 1px solid var(--line); background: var(--card2); color: var(--dim);
+    font-size: .72em; cursor: pointer; flex: none;
+  }
+  .help {
+    display: none; position: absolute; left: 10px; right: 10px; top: 40px; z-index: 30;
+    font-size: .78em; color: var(--text); line-height: 1.7;
+    background: var(--card2); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+  }
+  .help.on { display: block; }
+  .help b { color: var(--text); font-weight: 600; }
+  .card input {
+    width: 100%; background: var(--card2); border: 1px solid var(--line); color: var(--text);
+    padding: 9px 10px; border-radius: 9px; font-size: .85em; margin-bottom: 8px;
+  }
+  .srcrow { display: flex; gap: 6px; margin-bottom: 6px; }
+  .srcrow input { margin: 0; }
+  .srcrow .sn { flex: 0 0 30%; }
+  .srcrow .su { flex: 1; }
+  .srcrow .del { flex: none; background: var(--card2); border: 1px solid var(--line); color: #f87171; border-radius: 9px; width: 38px; cursor: pointer; }
+  .hint { font-size: .74em; color: var(--dim); word-break: break-all; margin-bottom: 8px; }
+  .msg { font-size: .78em; color: var(--acc); min-height: 1.2em; }
+  .msg.err { color: #f87171; }
+</style>
+</head>
+<body>
+<header><h1 id="title">跑步听什么</h1><span class="sub" data-i18n="sub">私人电台</span><button class="pill" id="langBtn">EN</button></header>
+
+<div class="player">
+  <div class="np-label">NOW PLAYING</div>
+  <div class="np-title" id="now"></div>
+  <div class="status" id="status"></div>
+  <div class="seekrow"><span id="cur">0:00</span><input type="range" id="seek" min="0" max="0" value="0" step="1"><span id="dur">0:00</span></div>
+  <div class="controls">
+    <button class="ctl" id="btnPrev" aria-label="prev"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zM18 6v12l-8.5-6z"/></svg></button>
+    <button class="ctl" id="bk15">−15</button>
+    <button class="ctl big" id="btnPlay" aria-label="play/pause"><svg id="icoPlay" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+    <button class="ctl" id="fw15">+15</button>
+    <button class="ctl" id="btnNext" aria-label="next"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg></button>
+  </div>
+  <div class="pills">
+    <button class="pill" id="btnRate">1x</button>
+    <button class="pill" id="btnSleep"></button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button data-v="news" class="on" data-i18n="tabNews">资讯</button><button data-v="books" data-i18n="tabBooks">书籍</button><button data-v="set" data-i18n="tabSet">设置</button>
+</div>
+<ul id="list"></ul>
+<div id="books" style="display:none"></div>
+<div id="set" style="display:none">
+  <div class="card">
+    <h2><span data-i18n="cardFeed">播客订阅地址</span> <button class="qm" aria-label="?">?</button></h2>
+    <div class="help" data-i18n="helpFeed"></div>
+    <div class="hint" id="feedUrl"></div>
+    <button class="pill" id="copyFeed" data-i18n="btnCopyFeed">复制</button>
+  </div>
+  <div class="card">
+    <h2><span data-i18n="cardTok">管理口令</span> <button class="qm" aria-label="?">?</button></h2>
+    <div class="help" data-i18n="helpTok"></div>
+    <input id="admTok" type="password" data-i18n-ph="phTok" placeholder="">
+  </div>
+  <div class="card">
+    <h2><span data-i18n="cardSrc">订阅源</span> <button class="qm" aria-label="?">?</button></h2>
+    <div class="help" data-i18n="helpSrc"></div>
+    <div id="srcList"></div>
+    <button class="pill" id="addSrc" data-i18n="btnAddSrc">+ 加一个源</button>
+    <button class="resume" id="saveCfg" style="margin-top:10px" data-i18n="btnSave">保存</button>
+    <div class="msg" id="setMsg"></div>
+  </div>
+  <div class="card">
+    <h2><span data-i18n="cardUrl">转单篇文章</span> <button class="qm" aria-label="?">?</button></h2>
+    <div class="help" data-i18n="helpUrl"></div>
+    <input id="oneUrl" data-i18n-ph="phUrl" placeholder="">
+    <button class="resume" id="sendUrl" data-i18n="btnSendUrl">转成一集</button>
+    <div class="msg" id="qMsg"></div>
+  </div>
+  <div class="card">
+    <h2><span data-i18n="cardBook">上传电子书</span> <button class="qm" aria-label="?">?</button></h2>
+    <div class="help" data-i18n="helpBook"></div>
+    <input type="file" id="bookFile" accept=".epub,.txt,.html,.htm,.pdf">
+    <button class="resume" id="upBook" data-i18n="btnUpBook">上传</button>
+    <div class="msg" id="bkMsg"></div>
+  </div>
+</div>
+<audio id="a" preload="none"></audio>
+
+<script src="config.js"></script>
+<script>
+// ---- 双语:localStorage lwr-lang 优先,否则跟浏览器语言 ----
+var I18N = {
+  zh: {
+    sub: '私人电台',
+    tabNews: '资讯', tabBooks: '书籍', tabSet: '设置',
+    npEmpty: '还没开始,下面点一集',
+    rate: '{r}x 速度', sleepOff: '定时 关', sleepSet: '定时 {n}分', sleepLeft: '定时 剩{n}分',
+    sleepDone: '定时到,已暂停',
+    cardFeed: '播客订阅地址',
+    helpFeed: '这是你的私人播客 RSS 地址。想在<b>播客 App</b>(Apple Podcasts、小宇宙、Pocket Casts…)里收听,就复制它,在 App 里选「<b>通过 URL 添加节目</b>」贴进去——以后每天的新节目会自动推送到 App。只在本网页听的话,不用管它。',
+    btnCopyFeed: '复制(在 Apple Podcasts 等 App 里"通过 URL 关注")',
+    cardTok: '管理口令',
+    helpTok: '<b>相当于这个电台的管理密码</b>,防止陌生人改动你的订阅源。部署时 <b>npm run setup</b> 会自动生成并打印,同时写在服务器 <b>.env</b> 文件的 <b>LWR_ADMIN_TOKEN</b> 一行(自己部署的去那里找,别人帮忙部署的问 TA 要)。<br>忘了想重设:打开 <b>https://dash.cloudflare.com</b> → 左侧「<b>Workers 和 Pages</b>」→ 点你的播放器项目 → <b>设置</b> → <b>变量和机密</b> → 编辑 <b>ADMIN_TOKEN</b>,改完回这里填新值。<br>填一次就保存在本机浏览器里,不会传到别处。<b>只是听节目的话不需要填</b>;想改下面的订阅源或转文章才需要。',
+    phTok: '部署时设置的 ADMIN_TOKEN,只存在本机',
+    cardSrc: '订阅源',
+    helpSrc: '每天早上,系统会从这里列出的 <b>RSS 源</b>抓取最新文章,改写成两人对话音频。左边填给自己看的名字,右边填 RSS 地址。<br>例:名字「<b>少数派</b>」,地址 <b>https://sspai.com/feed</b>。<br>不知道某网站的 RSS 地址?搜「网站名 + RSS」,或用 rsshub.app 生成。改完点保存,<b>明早批次生效</b>。(需要先填上面的管理口令)',
+    btnAddSrc: '+ 加一个源', btnSave: '保存(明早批次生效)',
+    phSrcName: '名称', phSrcUrl: 'RSS 地址 https://...',
+    cardUrl: '转单篇文章',
+    helpUrl: '看到一篇好文章,想用耳朵听?把<b>文章链接</b>贴进来,<b>几分钟内</b>就会转成一集音频,出现在「资讯」列表里,<b>不占每天的名额</b>。<br>例:<b>https://mp.weixin.qq.com/s/xxxx</b> 或任意博客/新闻页链接。(需要先填上面的管理口令)',
+    phUrl: 'https:// 文章链接', btnSendUrl: '转成一集(几分钟内生成)',
+    cardBook: '上传电子书',
+    helpBook: '把自己的电子书变成<b>有声书连载</b>:选一个 <b>.epub / .pdf / .txt / .html</b> 文件(50MB 以内)上传,<b>几分钟后</b>自动开始转音频,出现在「书籍」标签页。生成比播放快十倍左右,<b>从第 1 集听起就能边生成边听</b>,还会配一集两位主播的导读。英文书自动用英文声音朗读;想听中文可在服务器上跑 <b>npm run books:translate</b> 先整本翻译。删除书籍在服务器上执行 <b>npm run books:remove</b>。(需要先填上面的管理口令)',
+    btnUpBook: '上传(几分钟后可边生成边听)',
+    playFail: '播放失败:', audioErr: '音频错误:',
+    err1: '加载被中止', err2: '网络错误(设备连不上音频服务器)', err3: '解码失败', err4: '格式不支持或地址不可达', errX: '未知',
+    stalled: '缓冲中断,网络到音频服务器不稳定…',
+    needTok: '先填管理口令,再读写订阅源', badTok: '口令不对',
+    noSeed: '云端配置还没播种(管线首次运行时自动生成),稍后再来',
+    readFail: '读取失败:', copied: '已复制',
+    notLoaded: '配置未加载,不能保存', needOneSrc: '至少留一个有效源',
+    savedN: '已保存 {n} 个源,明早批次生效', saveFail: '保存失败:',
+    pickFile: '先选择文件', badExt: '只支持 .epub / .txt / .html / .pdf', tooBig: '文件超过 50MB',
+    uploading: '上传中({kb} KB)…', tokFirst: '先在上面填管理口令', http413: '文件太大',
+    uploaded: '已上传「{n}」,几分钟后开始生成,集数会陆续出现在书籍页,从第 1 集就能边生成边听',
+    upFail: '上传失败:', badUrl: '不是合法链接',
+    queued: '已排队(队列 {n} 篇),几分钟内生成,刷新资讯页可见', queueFail: '投递失败:',
+    pendingPrefix: '转换中/排队中:', pendingSep: '、',
+    noBase: '未配置存储地址',
+    noCfgJs: 'config.js 缺失:在项目里运行 npm run setup 自动生成并重新部署',
+    untitled: '(无标题)', unknownSrc: '未知来源', groupOther: '其他',
+    epCount: '共 {n} 集,播完自动连播', feedEmpty: 'feed 里还没有内容', feedFail: '加载 feed 失败:',
+    noBooks: '还没有书。',
+    booksPendingHint: '书籍清单还没生成(首次全书转音频约需 1-2 小时,期间刷新本页可见已完成的集数)。',
+    resume: '▶ 继续听:', introLbl: '导读', partN: '第 {n} 集', pnN: '{n} 集',
+    minShort: '{n}分', minLong: '{n} 分钟', progLine: '{a} / {b} 集 · 每集约 {m} 分钟'
+  },
+  en: {
+    sub: 'personal radio',
+    tabNews: 'News', tabBooks: 'Books', tabSet: 'Settings',
+    npEmpty: 'Nothing playing — tap an episode below',
+    rate: '{r}x speed', sleepOff: 'Sleep off', sleepSet: 'Sleep {n}m', sleepLeft: 'Sleep {n}m left',
+    sleepDone: 'Sleep timer ended — paused',
+    cardFeed: 'Podcast feed URL',
+    helpFeed: 'This is your private podcast RSS URL. To listen in a <b>podcast app</b> (Apple Podcasts, Pocket Casts, Overcast…), copy it and use "<b>Follow a show by URL</b>" in the app — new episodes will then arrive in the app automatically. If you only listen on this page, ignore it.',
+    btnCopyFeed: 'Copy (then "Follow by URL" in your podcast app)',
+    cardTok: 'Admin token',
+    helpTok: '<b>The admin password of your station</b> — it stops strangers from changing your feeds. <b>npm run setup</b> generates and prints it at deploy time, and writes it to the <b>LWR_ADMIN_TOKEN</b> line of the server’s <b>.env</b> file (check there if you deployed it yourself; otherwise ask whoever deployed it for you).<br>Forgot it? Open <b>https://dash.cloudflare.com</b> → <b>Workers &amp; Pages</b> → your player project → <b>Settings</b> → <b>Variables and Secrets</b> → edit <b>ADMIN_TOKEN</b>, then paste the new value here.<br>It is stored only in this browser. <b>You don’t need it just to listen</b> — only to edit feeds or convert content below.',
+    phTok: 'ADMIN_TOKEN set at deploy time; stored only on this device',
+    cardSrc: 'Feeds',
+    helpSrc: 'Every morning the system fetches new articles from the <b>RSS feeds</b> listed here and rewrites them into two-host dialogue audio. Left: any name for yourself; right: the RSS URL.<br>Example: name "<b>Hacker News</b>", URL <b>https://hnrss.org/frontpage</b>.<br>Can’t find a site’s RSS? Search "site name + RSS" or generate one with rsshub.app. Save — <b>takes effect in tomorrow morning’s batch</b>. (Requires the admin token above.)',
+    btnAddSrc: '+ Add a feed', btnSave: 'Save (effective tomorrow morning)',
+    phSrcName: 'Name', phSrcUrl: 'RSS URL https://...',
+    cardUrl: 'Convert one article',
+    helpUrl: 'Found a good read and want to listen instead? Paste the <b>article URL</b> — it becomes an audio episode <b>within minutes</b> in the News tab, <b>without using the daily quota</b>.<br>Example: any blog or news page URL. (Requires the admin token above.)',
+    phUrl: 'https:// article URL', btnSendUrl: 'Convert to an episode (ready in minutes)',
+    cardBook: 'Upload an ebook',
+    helpBook: 'Turn your own ebook into a <b>serialized audiobook</b>: upload one <b>.epub / .pdf / .txt / .html</b> file (up to 50MB); conversion starts automatically <b>within minutes</b> and episodes appear in the Books tab. Generation runs ~10x faster than playback, so <b>you can start listening from part 1 while the rest converts</b> — plus an AI "two hosts discuss this book" intro episode. English books are narrated with English voices automatically. To delete a book run <b>npm run books:remove</b> on the server. (Requires the admin token above.)',
+    btnUpBook: 'Upload (listen while it converts)',
+    playFail: 'Playback failed: ', audioErr: 'Audio error: ',
+    err1: 'loading aborted', err2: 'network error (cannot reach the audio server)', err3: 'decode failed', err4: 'unsupported format or unreachable URL', errX: 'unknown',
+    stalled: 'Buffering stalled — connection to the audio server is unstable…',
+    needTok: 'Enter the admin token first to view or edit feeds', badTok: 'wrong token',
+    noSeed: 'Remote config not seeded yet (created on the pipeline’s first run) — try again later',
+    readFail: 'Load failed: ', copied: 'Copied',
+    notLoaded: 'Config not loaded; cannot save', needOneSrc: 'Keep at least one valid feed',
+    savedN: 'Saved {n} feeds; effective tomorrow morning', saveFail: 'Save failed: ',
+    pickFile: 'Choose a file first', badExt: 'Only .epub / .txt / .html / .pdf are supported', tooBig: 'File exceeds 50MB',
+    uploading: 'Uploading ({kb} KB)…', tokFirst: 'enter the admin token above first', http413: 'file too large',
+    uploaded: 'Uploaded "{n}". Conversion starts within minutes; episodes will appear in Books — start listening from part 1 right away',
+    upFail: 'Upload failed: ', badUrl: 'Not a valid URL',
+    queued: 'Queued ({n} in line); ready within minutes — refresh the News tab', queueFail: 'Submit failed: ',
+    pendingPrefix: 'Converting / queued: ', pendingSep: ', ',
+    noBase: 'Storage URL not configured',
+    noCfgJs: 'config.js missing: run npm run setup in the project to generate it, then redeploy',
+    untitled: '(untitled)', unknownSrc: 'unknown source', groupOther: 'Other',
+    epCount: '{n} episodes; plays on to the next automatically', feedEmpty: 'No episodes in the feed yet', feedFail: 'Failed to load feed: ',
+    noBooks: 'No books yet.',
+    booksPendingHint: 'Book list not generated yet (a full book takes ~1–2 hours on first run; refresh to see finished parts).',
+    resume: '▶ Resume: ', introLbl: 'Intro', partN: 'Part {n}', pnN: '#{n}',
+    minShort: '{n}m', minLong: '{n} min', progLine: '{a} / {b} parts · ~{m} min each'
+  }
+};
+var L = localStorage.getItem('lwr-lang') ||
+        (String(navigator.language || '').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en');
+function t(k) { var v = I18N[L][k]; return v === undefined ? (I18N.zh[k] || '') : v; }
+function tf(k, vars) {
+  var s = t(k);
+  Object.keys(vars).forEach(function (x) { s = s.replace('{' + x + '}', vars[x]); });
+  return s;
+}
+function bookDisp(name) { return L === 'zh' ? '《' + name + '》' : name; }
+
+// 存储地址由 config.js 注入(npm run setup 自动生成,gitignored);缺失时页面给出指引
+var BASE = (window.LWR_CONFIG || {}).base || '';
+var a = document.getElementById('a'), listEl = document.getElementById('list'),
+    booksEl = document.getElementById('books'), nowEl = document.getElementById('now'),
+    statusEl = document.getElementById('status'), seekEl = document.getElementById('seek'),
+    curEl = document.getElementById('cur'), durEl = document.getElementById('dur'),
+    icoPlay = document.getElementById('icoPlay');
+var PLAY_D = 'M8 5v14l11-7z', PAUSE_D = 'M6 5h4v14H6zM14 5h4v14h-4z';
+var rate = 1;
+// 当前播放队列:{list: [{title,url,li,bookId,p}], i: index}
+var q = { list: [], i: -1 };
+var newsItems = [];
+var feedEntries = null, feedTitle = '';   // 解析后的 feed 数据,切语言时重渲染用
+var booksData = null, bookPartLists = [];
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmtBeijing(rfc822) {
+  var d = new Date(new Date(rfc822).getTime() + 8 * 3600000);
+  return pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) + ' ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes());
+}
+function mins(bytes) { return Math.round(bytes / 12000 / 60) || 1; } // 96kbps ≈ 12000 B/s
+function fmtSec(s) { s = Math.floor(s || 0); return Math.floor(s / 60) + ':' + pad(s % 60); }
+function setStatus(msg, isErr) { statusEl.textContent = msg || ''; statusEl.className = 'status' + (isErr ? ' err' : ''); }
+
+function play(list, i, seekTo) {
+  if (i < 0 || i >= list.length) return;
+  q = { list: list, i: i };
+  var it = list[i];
+  document.querySelectorAll('li.playing').forEach(function (el) { el.classList.remove('playing'); });
+  if (it.li) it.li.classList.add('playing');
+  a.src = it.url;
+  a.playbackRate = rate;
+  if (seekTo) a.currentTime = seekTo;
+  setStatus('');
+  var p = a.play();
+  if (p && p.catch) p.catch(function (e) { setStatus(t('playFail') + e.name + ' ' + e.message, true); });
+  nowEl.textContent = it.title;
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: it.title, artist: document.title });
+    navigator.mediaSession.setActionHandler('previoustrack', function () { play(q.list, q.i - 1); });
+    navigator.mediaSession.setActionHandler('nexttrack', function () { play(q.list, q.i + 1); });
+    navigator.mediaSession.setActionHandler('seekbackward', function () { skip(-15); });
+    navigator.mediaSession.setActionHandler('seekforward', function () { skip(15); });
+  }
+}
+function skip(sec) {
+  if (!a.src) return;
+  a.currentTime = Math.max(0, Math.min(a.duration || Infinity, a.currentTime + sec));
+}
+
+a.onended = function () { play(q.list, q.i + 1); };
+a.onplay = function () { a.playbackRate = rate; icoPlay.firstChild.setAttribute('d', PAUSE_D); };
+a.onpause = function () { icoPlay.firstChild.setAttribute('d', PLAY_D); };
+a.onloadedmetadata = function () { seekEl.max = Math.floor(a.duration) || 0; durEl.textContent = fmtSec(a.duration); };
+a.ontimeupdate = function () { curEl.textContent = fmtSec(a.currentTime); seekEl.value = Math.floor(a.currentTime); };
+a.onerror = function () {
+  var c = a.error ? a.error.code : 0;
+  setStatus(t('audioErr') + (t('err' + c) || t('errX')) + ' (code ' + c + ')', true);
+};
+a.onstalled = function () { setStatus(t('stalled')); };
+
+seekEl.oninput = function () { if (a.src) a.currentTime = +this.value; };
+document.getElementById('btnPlay').onclick = function () {
+  if (!a.src) { if (newsItems.length) play(newsItems, 0); return; }
+  if (a.paused) { var p = a.play(); if (p && p.catch) p.catch(function () {}); } else a.pause();
+};
+document.getElementById('btnPrev').onclick = function () { play(q.list, q.i - 1); };
+document.getElementById('btnNext').onclick = function () { play(q.list, q.i + 1); };
+document.getElementById('bk15').onclick = function () { skip(-15); };
+document.getElementById('fw15').onclick = function () { skip(15); };
+
+// 倍速:点按循环 1 → 1.25 → 1.5 → 2
+var RATES = [1, 1.25, 1.5, 2], ri = 0, btnRate = document.getElementById('btnRate');
+function updateRateBtn() { btnRate.textContent = tf('rate', { r: rate }); btnRate.className = 'pill' + (ri ? ' on' : ''); }
+btnRate.onclick = function () {
+  ri = (ri + 1) % RATES.length; rate = RATES[ri]; a.playbackRate = rate;
+  updateRateBtn();
+};
+
+// 定时停止:点按循环 关 → 15 → 30 → 45 → 60 分
+var SLEEPS = [0, 15, 30, 45, 60], si = 0, sleepAt = null, btnSleep = document.getElementById('btnSleep');
+function updateSleepBtn() {
+  if (sleepAt) btnSleep.textContent = tf('sleepLeft', { n: Math.ceil((sleepAt - Date.now()) / 60000) });
+  else btnSleep.textContent = si ? tf('sleepSet', { n: SLEEPS[si] }) : t('sleepOff');
+  btnSleep.className = 'pill' + (si ? ' on' : '');
+}
+btnSleep.onclick = function () {
+  si = (si + 1) % SLEEPS.length;
+  sleepAt = SLEEPS[si] ? Date.now() + SLEEPS[si] * 60000 : null;
+  updateSleepBtn();
+};
+setInterval(function () {
+  if (!sleepAt) return;
+  if (sleepAt - Date.now() <= 0) {
+    a.pause(); sleepAt = null; si = 0;
+    updateSleepBtn();
+    setStatus(t('sleepDone'));
+  } else {
+    updateSleepBtn();
+  }
+}, 1000);
+
+// 书籍:每 5 秒记住播到哪(哪本书、第几集、几分几秒)
+setInterval(function () {
+  var it = q.list[q.i];
+  if (it && it.bookId && !a.paused) {
+    localStorage.setItem('bk-' + it.bookId, JSON.stringify({ p: it.p, t: Math.floor(a.currentTime) }));
+  }
+}, 5000);
+
+var setEl = document.getElementById('set');
+document.getElementById('tabs').onclick = function (e) {
+  var v = e.target.dataset.v;
+  if (!v) return;
+  [].forEach.call(this.children, function (b) { b.className = b === e.target ? 'on' : ''; });
+  listEl.style.display = v === 'news' ? '' : 'none';
+  booksEl.style.display = v === 'books' ? '' : 'none';
+  setEl.style.display = v === 'set' ? '' : 'none';
+  if (v === 'set') loadSettings();
+};
+
+// ---- 设置 ----
+var cfgCache = null, settingsLoaded = false;
+var admTok = document.getElementById('admTok'), setMsg = document.getElementById('setMsg'),
+    srcList = document.getElementById('srcList'), qMsg = document.getElementById('qMsg');
+// 「?」悬浮提示:点问号开/关,点其他任意处关闭,不撑开卡片布局
+document.addEventListener('click', function (e) {
+  var qm = e.target.closest ? e.target.closest('.qm') : null;
+  var inHelp = e.target.closest ? e.target.closest('.help') : null;
+  var h = qm ? qm.closest('.card').querySelector('.help') : null;
+  [].forEach.call(document.querySelectorAll('.help.on'), function (x) {
+    if (x !== h && !(inHelp && x === inHelp)) x.classList.remove('on');
+  });
+  if (h) h.classList.toggle('on');
+});
+// #tok=xxx 一次性登录链接:口令存进本机后立刻从地址栏抹掉,以后打开即已登录
+var mTok = /[#&]tok=([^&]+)/.exec(location.hash);
+if (mTok) {
+  localStorage.setItem('admtok', decodeURIComponent(mTok[1]));
+  history.replaceState(null, '', location.pathname + location.search);
+}
+admTok.value = localStorage.getItem('admtok') || '';
+admTok.onchange = function () { localStorage.setItem('admtok', this.value.trim()); settingsLoaded = false; loadSettings(); };
+function admHeaders(json) {
+  var h = { 'x-admin-token': localStorage.getItem('admtok') || '' };
+  if (json) h['content-type'] = 'application/json';
+  return h;
+}
+function msg(el, text, isErr) { el.textContent = text; el.className = 'msg' + (isErr ? ' err' : ''); }
+function srcRow(name, url) {
+  var row = document.createElement('div');
+  row.className = 'srcrow';
+  row.innerHTML = '<input class="sn"><input class="su"><button class="del">✕</button>';
+  row.querySelector('.sn').placeholder = t('phSrcName');
+  row.querySelector('.su').placeholder = t('phSrcUrl');
+  row.querySelector('.sn').value = name || '';
+  row.querySelector('.su').value = url || '';
+  row.querySelector('.del').onclick = function () { row.remove(); };
+  srcList.appendChild(row);
+}
+function loadSettings() {
+  document.getElementById('feedUrl').textContent = BASE + 'feed.xml';
+  if (settingsLoaded) return;
+  if (!admTok.value) { msg(setMsg, t('needTok'), true); return; }
+  fetch('/api/config', { headers: admHeaders() }).then(function (r) {
+    if (r.status === 401) throw new Error(t('badTok'));
+    return r.json();
+  }).then(function (cfg) {
+    srcList.innerHTML = '';
+    if (!cfg) { msg(setMsg, t('noSeed'), true); return; }
+    cfgCache = cfg;
+    (cfg.sources || []).forEach(function (s) { srcRow(s.name, s.url); });
+    settingsLoaded = true;
+    msg(setMsg, '');
+  }).catch(function (e) { msg(setMsg, t('readFail') + e.message, true); });
+  loadPendingBooks();
+}
+// 待转换的上传书(生成完成前源文件留在 bucket,完成后自动消失)
+function loadPendingBooks() {
+  fetch('/api/book', { headers: admHeaders() }).then(function (r) {
+    if (!r.ok) throw 0;
+    return r.json();
+  }).then(function (d) {
+    if (d.pending && d.pending.length) {
+      msg(bkMsg, t('pendingPrefix') + d.pending.join(t('pendingSep')));
+    }
+  }).catch(function () {});
+}
+document.getElementById('copyFeed').onclick = function () {
+  navigator.clipboard.writeText(BASE + 'feed.xml').then(function () { msg(setMsg, t('copied')); });
+};
+document.getElementById('addSrc').onclick = function () { srcRow('', ''); };
+document.getElementById('saveCfg').onclick = function () {
+  if (!cfgCache) { msg(setMsg, t('notLoaded'), true); return; }
+  var sources = [];
+  [].forEach.call(srcList.querySelectorAll('.srcrow'), function (row) {
+    var n = row.querySelector('.sn').value.trim(), u = row.querySelector('.su').value.trim();
+    if (n && /^https?:\/\//.test(u)) sources.push({ name: n, url: u });
+  });
+  if (!sources.length) { msg(setMsg, t('needOneSrc'), true); return; }
+  cfgCache.sources = sources;
+  fetch('/api/config', { method: 'PUT', headers: admHeaders(true), body: JSON.stringify(cfgCache, null, 2) })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); msg(setMsg, tf('savedN', { n: sources.length })); })
+    .catch(function (e) { msg(setMsg, t('saveFail') + e.message, true); });
+};
+var bkMsg = document.getElementById('bkMsg');
+document.getElementById('upBook').onclick = function () {
+  var f = document.getElementById('bookFile').files[0];
+  if (!f) { msg(bkMsg, t('pickFile'), true); return; }
+  if (!/\.(epub|txt|html?|pdf)$/i.test(f.name)) { msg(bkMsg, t('badExt'), true); return; }
+  if (f.size > 50 * 1024 * 1024) { msg(bkMsg, t('tooBig'), true); return; }
+  msg(bkMsg, tf('uploading', { kb: Math.round(f.size / 1024) }));
+  fetch('/api/book?name=' + encodeURIComponent(f.name), { method: 'PUT', headers: admHeaders(), body: f })
+    .then(function (r) {
+      if (!r.ok) throw new Error(r.status === 401 ? t('tokFirst') : r.status === 413 ? t('http413') : 'HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function (d) {
+      msg(bkMsg, tf('uploaded', { n: d.uploaded }));
+      document.getElementById('bookFile').value = '';
+    })
+    .catch(function (e) { msg(bkMsg, t('upFail') + e.message, true); });
+};
+document.getElementById('sendUrl').onclick = function () {
+  var url = document.getElementById('oneUrl').value.trim();
+  if (!/^https?:\/\//.test(url)) { msg(qMsg, t('badUrl'), true); return; }
+  fetch('/api/queue', { method: 'POST', headers: admHeaders(true), body: JSON.stringify({ url: url }) })
+    .then(function (r) { if (!r.ok) throw new Error(r.status === 401 ? t('tokFirst') : 'HTTP ' + r.status); return r.json(); })
+    .then(function (d) { msg(qMsg, tf('queued', { n: d.queued })); document.getElementById('oneUrl').value = ''; })
+    .catch(function (e) { msg(qMsg, t('queueFail') + e.message, true); });
+};
+
+// ---- 语言应用与切换 ----
+function applyLang() {
+  document.documentElement.lang = L === 'zh' ? 'zh-CN' : 'en';
+  [].forEach.call(document.querySelectorAll('[data-i18n]'), function (el) { el.innerHTML = t(el.getAttribute('data-i18n')); });
+  [].forEach.call(document.querySelectorAll('[data-i18n-ph]'), function (el) { el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+  [].forEach.call(srcList.querySelectorAll('.sn'), function (el) { el.placeholder = t('phSrcName'); });
+  [].forEach.call(srcList.querySelectorAll('.su'), function (el) { el.placeholder = t('phSrcUrl'); });
+  document.getElementById('langBtn').textContent = L === 'zh' ? 'EN' : '中文';
+  if (!a.src) nowEl.textContent = t('npEmpty');
+  updateRateBtn(); updateSleepBtn();
+}
+function restorePlaying() {
+  if (!a.src) return;
+  var lists = [newsItems].concat(bookPartLists);
+  for (var li = 0; li < lists.length; li++) {
+    for (var i = 0; i < lists[li].length; i++) {
+      if (lists[li][i].url === a.src) {
+        q = { list: lists[li], i: i };
+        if (lists[li][i].li) lists[li][i].li.classList.add('playing');
+        return;
+      }
+    }
+  }
+}
+document.getElementById('langBtn').onclick = function () {
+  L = L === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('lwr-lang', L);
+  applyLang();
+  if (feedEntries) { listEl.innerHTML = ''; newsItems = []; renderNews(); }
+  if (booksData) { booksEl.innerHTML = ''; renderBooks(); }
+  restorePlaying();
+};
+
+// ---- 资讯:读 feed.xml ----
+function renderNews() {
+  if (feedTitle) { document.title = feedTitle; document.getElementById('title').textContent = feedTitle; }
+  var groups = [];
+  feedEntries.forEach(function (e) {
+    var g = e.group || t('groupOther');
+    if (groups.indexOf(g) < 0) groups.push(g);
+  });
+  groups.forEach(function (g) {
+    var mine = feedEntries.filter(function (e) { return (e.group || t('groupOther')) === g; });
+    if (groups.length > 1) {
+      var h = document.createElement('li');
+      h.className = 'ghead';
+      h.textContent = '— ' + g + ' —';
+      listEl.appendChild(h);
+    }
+    mine.forEach(function (e) {
+      var li = document.createElement('li');
+      li.innerHTML = '<span class="t"></span><span class="m"><span class="src"></span><span class="mm"></span></span>';
+      li.querySelector('.t').textContent = e.title || t('untitled');
+      li.querySelector('.src').textContent = e.src || t('unknownSrc');
+      li.querySelector('.mm').textContent = (e.pub ? fmtBeijing(e.pub) : '') + ' · ' + tf('minLong', { n: mins(e.bytes) });
+      var item = { title: e.title, url: e.url, li: li };
+      li.onclick = (function (idx) { return function () { play(newsItems, idx); }; })(newsItems.length);
+      listEl.appendChild(li);
+      newsItems.push(item);
+    });
+  });
+  if (!a.src) setStatus(newsItems.length ? tf('epCount', { n: newsItems.length }) : t('feedEmpty'));
+}
+if (!BASE) {
+  nowEl.textContent = t('noBase');
+  listEl.innerHTML = '<li class="empty">' + t('noCfgJs') + '</li>';
+}
+if (BASE) fetch(BASE + 'feed.xml').then(function (r) { return r.text(); }).then(function (xml) {
+  var doc = new DOMParser().parseFromString(xml, 'text/xml');
+  var chTitle = doc.querySelector('channel > title');
+  feedTitle = chTitle ? chTitle.textContent : '';
+  // 先收集,再按 <category> 分组渲染;连播顺序 = 分组后的显示顺序
+  feedEntries = [];
+  [].forEach.call(doc.querySelectorAll('item'), function (node) {
+    var enc = node.querySelector('enclosure');
+    if (!enc) return;
+    feedEntries.push({
+      title: (node.querySelector('title') || {}).textContent || '',
+      src: (node.getElementsByTagName('itunes:author')[0] || {}).textContent || '',
+      pub: (node.querySelector('pubDate') || {}).textContent || '',
+      group: (node.querySelector('category') || {}).textContent || '',
+      url: enc.getAttribute('url'),
+      bytes: +enc.getAttribute('length')
+    });
+  });
+  renderNews();
+  // 离线预取:最新 3 集缓存到本机,出门没网也能听
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'prefetch', urls: newsItems.slice(0, 3).map(function (x) { return x.url; }) });
+  }
+}).catch(function (e) { setStatus(t('feedFail') + e.message, true); });
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+// ---- 书籍:读 books.json ----
+function renderBooks() {
+  bookPartLists = [];
+  if (!booksData.books || !booksData.books.length) { booksEl.innerHTML = '<div class="empty">' + t('noBooks') + '</div>'; return; }
+  booksData.books.forEach(function (b, bi) {
+    var card = document.createElement('details');
+    card.className = 'book';
+    if (bi === 0) card.open = true;
+    var parts = [];
+    bookPartLists.push(parts);
+    var head = document.createElement('summary');
+    head.innerHTML = '<h2></h2><div class="prog"></div>';
+    head.querySelector('h2').textContent = bookDisp(b.name);
+    head.querySelector('.prog').textContent = tf('progLine', { a: b.parts.length, b: b.totalParts, m: mins(b.parts.length ? b.parts[0].bytes : 0) });
+    card.appendChild(head);
+    var body = document.createElement('div');
+    body.className = 'bbody';
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem('bk-' + b.id)); } catch (e) {}
+    if (saved && saved.p !== undefined && saved.p !== null) {
+      var btn = document.createElement('button');
+      btn.className = 'resume';
+      btn.textContent = t('resume') + (saved.p === 0 ? t('introLbl') : tf('partN', { n: saved.p })) + ' ' + fmtSec(saved.t);
+      btn.onclick = function () {
+        var idx = parts.findIndex(function (x) { return x.p === saved.p; });
+        if (idx >= 0) play(parts, idx, saved.t);
+      };
+      body.appendChild(btn);
+    }
+    var ul = document.createElement('ul');
+    ul.className = 'parts';
+    var rows = (b.intro ? [b.intro] : []).concat(b.parts);
+    rows.forEach(function (part, idx) {
+      var li = document.createElement('li');
+      li.innerHTML = '<span class="pn"></span><span class="ps"></span><span class="pm"></span>';
+      li.querySelector('.pn').textContent = part.p === 0 ? t('introLbl') : tf('pnN', { n: part.p });
+      li.querySelector('.ps').textContent = part.s || '';
+      li.querySelector('.pm').textContent = tf('minShort', { n: mins(part.bytes) });
+      li.onclick = function () { play(parts, idx); };
+      ul.appendChild(li);
+      parts.push({
+        title: bookDisp(b.name) + (part.p === 0 ? ' · ' + t('introLbl') : ' · ' + tf('partN', { n: part.p })),
+        url: BASE + part.path, li: li, bookId: b.id, p: part.p
+      });
+    });
+    body.appendChild(ul);
+    card.appendChild(body);
+    booksEl.appendChild(card);
+  });
+}
+if (BASE) fetch(BASE + 'books.json').then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (m) {
+  booksData = m;
+  renderBooks();
+}).catch(function () { booksEl.innerHTML = '<div class="empty">' + t('booksPendingHint') + '</div>'; });
+
+applyLang();
+</script>
+</body>
+</html>

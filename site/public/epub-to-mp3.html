@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Epub to MP3: Convert an Ebook to MP3 Audio Files, Free</title>
+<meta name="description" content="Convert epub to MP3 with neural AI voices, free and open source. Get one MP3 per chapter-sized episode, playable anywhere, plus a private podcast feed for your phone.">
+<link rel="canonical" href="https://lwr-site.pages.dev/epub-to-mp3">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I just download the MP3s?","acceptedAnswer":{"@type":"Answer","text":"Yes — they're regular files in your own Cloudflare R2 bucket with public URLs. No DRM, no app lock-in."}},{"@type":"Question","name":"How big are the files?","acceptedAnswer":{"@type":"Answer","text":"About 5MB per 10-minute episode at 96kbps mono; a full book is typically 300–600MB, and R2's free tier holds 10GB."}},{"@type":"Question","name":"What about mobi or PDF?","acceptedAnswer":{"@type":"Answer","text":"PDF works directly; mobi/azw3 convert to epub first with Calibre (one click)."}}]}</script>
+<style>
+:root{--bg:#0b0f17;--card:#131a26;--card2:#1a2333;--line:#233047;--text:#e6ecf5;--dim:#8b98ac;--acc:#35d399;--acc2:#22d3ee}
+@media (prefers-color-scheme:light){:root{--bg:#f7f9fc;--card:#fff;--card2:#eef2f8;--line:#dbe3ee;--text:#16202e;--dim:#5b687a}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.8}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px 60px}
+nav{display:flex;justify-content:space-between;padding:14px 0;font-size:.85em}
+nav a{color:var(--dim);text-decoration:none;margin-left:14px}
+nav .brand{color:var(--acc);font-weight:700;margin:0}
+h1{font-size:1.7em;line-height:1.4;margin:28px 0 6px}
+.lede{color:var(--dim);margin-bottom:26px}
+h2{font-size:1.2em;margin:30px 0 10px}
+p{margin-bottom:14px}
+ol,ul{margin:0 0 14px 22px}
+li{margin-bottom:6px}
+code{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:.9em}
+.cta{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:26px 0}
+.cta a.b{display:inline-block;padding:10px 22px;border-radius:10px;font-weight:600;text-decoration:none;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#08110c;margin-right:8px}
+.cta a.g{display:inline-block;padding:10px 22px;border-radius:10px;border:1px solid var(--line);color:var(--text);text-decoration:none}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600}
+details p{color:var(--dim);font-size:.93em;margin:8px 0 0}
+footer{border-top:1px solid var(--line);padding-top:20px;color:var(--dim);font-size:.85em}
+footer a{color:var(--acc2);margin-right:10px}
+a{color:var(--acc2)}
+</style>
+</head>
+<body><div class="wrap">
+<nav><a class="brand" href="/">listenwhilerunning</a><span><a href="https://lwr-demo.pages.dev">Demo</a><a href="https://github.com/paceboy/listenwhilerunning">GitHub</a><a href="/zh">中文</a></span></nav>
+<h1>Epub to MP3 — One Clean Audio File per Chapter</h1>
+<p class="lede">Sometimes you don't want an app — you want MP3 files. This open-source pipeline converts an epub into a series of ~10-minute MP3s with natural neural voices, stored in your own bucket where you can download, sync, or podcast them.</p>
+
+<h2>What you get</h2>
+<p>Each book becomes <code>bookaudio/&lt;id&gt;/1.mp3, 2.mp3, …</code> in your own object storage — 96kbps mono, sentence-boundary splits, roughly 10 minutes per file. They're plain MP3s: copy them to a watch, an old iPod, a car USB stick, anything.</p>
+<h2>But the podcast feed is the better interface</h2>
+<p>The same files are also published to a private podcast RSS feed with episode titles, AI-generated per-episode summaries, and an intro episode where two AI hosts discuss the book. Subscribe once in any podcast app and you get resume positions and lock-screen controls for free — worth trying before you go file-management mode.</p>
+<h2>Voice quality</h2>
+<p>The default voices are Microsoft's neural TTS — the same family as Edge's Read Aloud — which handle long-form prose with natural pacing and are free for personal use. Language is auto-detected per book, and you can pick any voice from the catalog.</p>
+
+<div class="cta"><b>listenwhilerunning</b> is open source (AGPL-3.0) and runs on your own free-tier accounts.<br><br>
+<a class="b" href="https://github.com/paceboy/listenwhilerunning">Get it on GitHub →</a> <a class="g" href="https://lwr-demo.pages.dev">Live demo</a> <a class="g" href="/#waitlist">Hosted version waitlist</a></div>
+<h2>FAQ</h2>
+<details><summary>Can I just download the MP3s?</summary><p>Yes — they're regular files in your own Cloudflare R2 bucket with public URLs. No DRM, no app lock-in.</p></details>
+<details><summary>How big are the files?</summary><p>About 5MB per 10-minute episode at 96kbps mono; a full book is typically 300–600MB, and R2's free tier holds 10GB.</p></details>
+<details><summary>What about mobi or PDF?</summary><p>PDF works directly; mobi/azw3 convert to epub first with Calibre (one click).</p></details>
+<footer><p>More guides: <a href="/rss-to-podcast">RSS to podcast</a> <a href="/epub-to-audiobook">Epub to audiobook</a> <a href="/notebooklm-alternative">NotebookLM alternative</a> <a href="/self-hosted-podcast-generator">Self-hosted generator</a> <a href="/listen-to-articles-while-running">Listen while running</a> <a href="/ai-audiobook-generator">AI audiobook generator</a> <a href="/convert-book-to-audiobook">Convert book to audiobook</a> <a href="/self-hosted-notebooklm">Self-hosted NotebookLM</a> <a href="/what-to-listen-to-while-running">What to listen to running</a> <a href="/pdf-to-audiobook">PDF to audiobook</a> <a href="/free-audiobook-maker">Free audiobook maker</a> <a href="/audiobooks-for-running">Audiobooks for running</a> <a href="/notebooklm-open-source">NotebookLM open source</a> <a href="/notebooklm-audio-overview">Audio Overview explained</a></p>
+<p><a href="/">listenwhilerunning</a> — turn your RSS feeds and ebooks into a personal podcast. Open source, ~$0/mo.</p></footer>
+</div></body></html>

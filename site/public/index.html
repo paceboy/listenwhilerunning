@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>listenwhilerunning — Open-Source AI Podcast Generator for Your RSS Feeds & Ebooks</title>
+<meta name="description" content="Open-source personal podcast generator: your RSS subscriptions become a daily two-host AI podcast, your epubs become serialized audiobooks. Standard podcast RSS output, works with Apple Podcasts. Self-hosted on Cloudflare's free tier — about $0/month.">
+<meta name="keywords" content="rss to podcast, ai podcast generator, epub to audiobook, articles to podcast, notebooklm alternative, self-hosted podcast, newsletter to podcast, text to podcast">
+<meta property="og:title" content="listenwhilerunning — Turn RSS feeds & ebooks into your personal podcast">
+<meta property="og:description" content="Open source, zero backend, ~$0/mo. Two-host dialogue news + full audiobooks + a runner-friendly player.">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://lwr-site.pages.dev/">
+<link rel="alternate" hreflang="zh" href="https://lwr-site.pages.dev/zh">
+<link rel="alternate" hreflang="en" href="https://lwr-site.pages.dev/">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"listenwhilerunning","applicationCategory":"MultimediaApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0"},"description":"Turn your RSS feeds and ebooks into a personal podcast and audiobooks. Open source, AGPL-3.0.","license":"https://www.gnu.org/licenses/agpl-3.0.html"}
+</script>
+<style>
+  :root { --bg:#0b0f17; --card:#131a26; --card2:#1a2333; --line:#233047; --text:#e6ecf5; --dim:#8b98ac; --acc:#35d399; --acc2:#22d3ee; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f7f9fc; --card:#ffffff; --card2:#eef2f8; --line:#dbe3ee; --text:#16202e; --dim:#5b687a; } }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,Segoe UI,Roboto,"PingFang SC",sans-serif; line-height:1.75; }
+  .wrap { max-width:860px; margin:0 auto; padding:0 20px; }
+  nav { display:flex; justify-content:flex-end; gap:16px; padding:14px 0; font-size:.85em; }
+  nav a { color:var(--dim); text-decoration:none; }
+  header { padding:44px 0 40px; text-align:center; }
+  h1 { font-size:2em; line-height:1.35; background:linear-gradient(135deg,var(--acc),var(--acc2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .sub { color:var(--dim); margin:14px auto 26px; max-width:600px; }
+  .cta { display:inline-block; padding:12px 26px; border-radius:12px; font-weight:600; text-decoration:none; margin:0 6px 10px; }
+  .cta.main { background:linear-gradient(135deg,var(--acc),var(--acc2)); color:#08110c; }
+  .cta.ghost { border:1px solid var(--line); color:var(--text); }
+  section { padding:34px 0; border-top:1px solid var(--line); }
+  h2 { font-size:1.3em; margin-bottom:18px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .card h3 { font-size:1em; margin-bottom:8px; }
+  .card p { font-size:.9em; color:var(--dim); }
+  .steps { counter-reset:s; }
+  .steps .card { position:relative; padding-left:56px; margin-bottom:12px; }
+  .steps .card::before { counter-increment:s; content:counter(s); position:absolute; left:16px; top:16px; width:28px; height:28px; border-radius:50%; background:var(--card2); color:var(--acc); display:flex; align-items:center; justify-content:center; font-weight:700; }
+  code { background:var(--card2); border:1px solid var(--line); border-radius:6px; padding:1px 7px; font-size:.9em; }
+  .wl input { width:100%; max-width:340px; background:var(--card2); border:1px solid var(--line); color:var(--text); padding:11px 14px; border-radius:10px; font-size:.95em; }
+  .wl button { padding:11px 22px; border-radius:10px; border:0; background:linear-gradient(135deg,var(--acc),var(--acc2)); color:#08110c; font-weight:600; cursor:pointer; margin-left:8px; }
+  .wl .msg { font-size:.85em; color:var(--acc); min-height:1.4em; margin-top:8px; }
+  details { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 16px; margin-bottom:10px; }
+  summary { cursor:pointer; font-weight:600; }
+  details p { color:var(--dim); font-size:.92em; margin-top:8px; }
+  footer { padding:40px 0 60px; color:var(--dim); font-size:.85em; text-align:center; }
+  footer .links { margin-bottom:10px; }
+  footer .links a { color:var(--acc2); margin:0 8px; }
+  a { color:var(--acc2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav><a href="https://lwr-demo.pages.dev">Live demo</a><a href="https://github.com/paceboy/listenwhilerunning">GitHub</a><a href="/zh">中文</a></nav>
+<header>
+  <h1>Turn your RSS feeds and ebooks<br>into a personal podcast</h1>
+  <p class="sub">Nothing good to listen to on your runs and commutes? <b>listenwhilerunning</b> rewrites <b>your own subscriptions</b> into a two-host dialogue podcast every morning, and converts your epubs into serialized audiobooks — open source, zero backend, roughly $0/month.</p>
+  <a class="cta main" href="https://github.com/paceboy/listenwhilerunning">Get it on GitHub →</a>
+  <a class="cta ghost" href="https://lwr-demo.pages.dev">Try the live demo</a>
+  <a class="cta ghost" href="#waitlist">Hosted version ✉</a>
+</header>
+
+<section>
+  <h2>What it does</h2>
+  <div class="grid">
+    <div class="card"><h3>📰 RSS → dialogue podcast</h3><p>Your RSS feeds, subreddits, or any article URL get rewritten by an LLM into a natural two-host conversation, synthesized to audio, and delivered to your podcast app every morning.</p></div>
+    <div class="card"><h3>📚 Ebooks → audiobooks</h3><p>Upload an epub/PDF/txt/html from your phone; it becomes a serialized audiobook with an AI-generated "hosts discuss this book" intro. Generation runs ~10x faster than playback, so you can start listening within minutes.</p></div>
+    <div class="card"><h3>📡 Standard podcast RSS</h3><p>Apple Podcasts, Pocket Casts, Overcast — anything that can "follow by URL" just works. No platform lock-in, no app to install.</p></div>
+    <div class="card"><h3>🏃 Runner-friendly player</h3><p>A PWA web player with lock-screen controls, ±15s skip, speed, sleep timer, offline caching, and resume — open it once before you head out and listen offline.</p></div>
+    <div class="card"><h3>🧱 Zero backend</h3><p>A batch pipeline + object storage + a static page. Everything fits in Cloudflare's free tier (R2 10GB, free egress). No server to maintain.</p></div>
+    <div class="card"><h3>🔓 Open source, AGPL-3.0</h3><p>Your data stays in your own accounts. The LLM is any OpenAI-compatible endpoint — skip it and episodes fall back to plain readout.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Self-host it in three steps</h2>
+  <div class="steps">
+    <div class="card"><h3>Clone & install</h3><p><code>git clone</code> the repo, <code>npm install</code>, and fill two Cloudflare values in <code>.env</code> (comments tell you exactly where to get them).</p></div>
+    <div class="card"><h3>One-command deploy</h3><p><code>npm run setup</code> creates the storage bucket, public domain, and admin token, deploys the player, and prints your player URL and podcast feed URL.</p></div>
+    <div class="card"><h3>Start listening</h3><p><code>npm run pipeline</code> generates your first batch. Add GitHub Actions or cron for daily updates, and upload ebooks straight from the player.</p></div>
+  </div>
+</section>
+
+<section id="waitlist">
+  <h2>Don't want to self-host? Join the hosted-version waitlist</h2>
+  <p style="color:var(--dim);margin-bottom:14px">We're evaluating a hosted version — sign up and listen, zero setup. Leave your email and you'll be the first to know; the length of this list directly decides how fast we build it.</p>
+  <div class="wl">
+    <input id="em" type="email" placeholder="you@example.com"><button id="go">Join</button>
+    <div class="msg" id="wmsg"></div>
+  </div>
+</section>
+
+<section>
+  <h2>FAQ</h2>
+  <details><summary>How is this different from NotebookLM's Audio Overviews?</summary><p>NotebookLM generates audio for documents you feed it one at a time. listenwhilerunning is a <em>pipeline</em>: it watches your RSS feeds and book folder, generates audio on schedule, and pushes everything to one private podcast feed. Set it up once, and new audio just appears in your podcast app. It's also open source and runs on your own accounts.</p></details>
+  <details><summary>What happened to apps like Recast and PlayNote?</summary><p>They paid for TTS and LLM costs on behalf of their users, and shut down. This project inverts the model: the pipeline is open source and runs on your own free-tier infrastructure, so there's no burn rate to kill it.</p></details>
+  <details><summary>How long does an epub take to convert?</summary><p>Generation runs about 10x faster than playback. A 200-page book takes roughly 2–3 hours end to end, but the first episode is ready minutes after upload — you can listen while the rest generates and never catch up to it.</p></details>
+  <details><summary>Can it read English books in Chinese, or vice versa?</summary><p>It detects the book's language and switches voices automatically. There's also a built-in whole-book translation command, so you can listen to an English book as a Chinese audiobook.</p></details>
+  <details><summary>What does it cost to run?</summary><p>Storage and bandwidth: free (Cloudflare R2 free tier). LLM rewriting: pay-as-you-go, typically a few cents per day for 8 news episodes; optional. TTS: free for personal use via Edge TTS, swappable for any commercial TTS.</p></details>
+</section>
+
+<footer>
+  <div class="links">
+    <a href="/rss-to-podcast">RSS to podcast</a>
+    <a href="/epub-to-audiobook">Epub to audiobook</a>
+    <a href="/notebooklm-alternative">NotebookLM alternative</a>
+    <a href="/self-hosted-podcast-generator">Self-hosted podcast generator</a>
+    <a href="/listen-to-articles-while-running">Listen while running</a>
+    <a href="/ai-audiobook-generator">AI audiobook generator</a>
+    <a href="/convert-book-to-audiobook">Convert book to audiobook</a>
+    <a href="/self-hosted-notebooklm">Self-hosted NotebookLM</a>
+    <a href="/what-to-listen-to-while-running">What to listen to running</a>
+    <a href="/pdf-to-audiobook">PDF to audiobook</a>
+    <a href="/epub-to-mp3">Epub to MP3</a>
+    <a href="/free-audiobook-maker">Free audiobook maker</a>
+    <a href="/audiobooks-for-running">Audiobooks for running</a>
+    <a href="/notebooklm-open-source">NotebookLM open source</a>
+    <a href="/notebooklm-audio-overview">Audio Overview automated</a>
+    <a href="/zh">中文</a>
+  </div>
+  <p><a href="https://github.com/paceboy/listenwhilerunning">GitHub</a> · AGPL-3.0 · listenwhilerunning · 跑步听什么</p>
+</footer>
+</div>
+<script>
+document.getElementById('go').onclick = function () {
+  var em = document.getElementById('em').value.trim(), m = document.getElementById('wmsg');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) { m.textContent = 'Invalid email'; return; }
+  m.textContent = 'Submitting…';
+  fetch('/api/wait', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: em }) })
+    .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+    .then(function (d) { m.textContent = "You're #" + d.n + " on the list. We'll email you at launch!"; })
+    .catch(function () { m.textContent = 'Failed, please retry later'; });
+};
+</script>
+</body>
+</html>

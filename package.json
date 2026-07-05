@@ -1,0 +1,32 @@
+{
+  "name": "listenwhilerunning",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "pipeline": "tsx src/index.ts",
+    "pipeline:one": "tsx src/index.ts --limit 1",
+    "add": "tsx src/addUrl.ts",
+    "books:sync": "tsx src/syncBooks.ts",
+    "books:translate": "tsx src/translateBook.ts",
+    "books:remove": "tsx src/removeBook.ts",
+    "books:feeds": "tsx src/bookFeeds.ts",
+    "poll": "tsx src/poll.ts",
+    "setup": "tsx src/setup.ts",
+    "waitlist": "tsx src/waitlist.ts"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.18",
+    "dotenv": "^16.4.5",
+    "msedge-tts": "^2.0.6",
+    "pdf-parse": "^2.4.5",
+    "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/node": "^26.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

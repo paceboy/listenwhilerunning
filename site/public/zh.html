@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>跑步听什么 · listenwhilerunning — 把你的 RSS 订阅和电子书,自动变成私人播客与有声书</title>
+<meta name="description" content="开源的私人电台生成器:RSS/文章链接自动改写成双主播对谈播客,epub 电子书一键变有声书连载。标准播客 RSS 输出,Apple Podcasts 直接订阅。零服务器,跑在 Cloudflare 免费额度上,约 0 成本。RSS 转播客 / 文章转语音 / epub 转有声书 / AI podcast generator。">
+<meta name="keywords" content="RSS 转播客, 文章转语音, epub 转有声书, AI 播客生成, 私人播客, 跑步听什么, rss to podcast, ai podcast generator, text to audio, ebook to audiobook, self-hosted podcast">
+<meta property="og:title" content="跑步听什么 — 把你的 RSS 和电子书变成私人播客">
+<meta property="og:description" content="开源、零服务器、约 0 成本。双主播对谈资讯 + 整本有声书 + 跑步友好播放器。">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://lwr-site.pages.dev/zh">
+<link rel="alternate" hreflang="en" href="https://lwr-site.pages.dev/">
+<link rel="alternate" hreflang="zh" href="https://lwr-site.pages.dev/zh">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"listenwhilerunning 跑步听什么","applicationCategory":"MultimediaApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0"},"description":"把你的 RSS 订阅和电子书自动变成私人播客与有声书,开源 AGPL-3.0","license":"https://www.gnu.org/licenses/agpl-3.0.html"}
+</script>
+<style>
+  :root { --bg:#0b0f17; --card:#131a26; --card2:#1a2333; --line:#233047; --text:#e6ecf5; --dim:#8b98ac; --acc:#35d399; --acc2:#22d3ee; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f7f9fc; --card:#ffffff; --card2:#eef2f8; --line:#dbe3ee; --text:#16202e; --dim:#5b687a; } }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif; line-height:1.75; }
+  .wrap { max-width:860px; margin:0 auto; padding:0 20px; }
+  header { padding:64px 0 40px; text-align:center; }
+  h1 { font-size:2em; line-height:1.35; background:linear-gradient(135deg,var(--acc),var(--acc2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .sub { color:var(--dim); margin:14px auto 26px; max-width:560px; }
+  .cta { display:inline-block; padding:12px 26px; border-radius:12px; font-weight:600; text-decoration:none; margin:0 6px 10px; }
+  .cta.main { background:linear-gradient(135deg,var(--acc),var(--acc2)); color:#08110c; }
+  .cta.ghost { border:1px solid var(--line); color:var(--text); }
+  section { padding:34px 0; border-top:1px solid var(--line); }
+  h2 { font-size:1.3em; margin-bottom:18px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .card h3 { font-size:1em; margin-bottom:8px; }
+  .card p { font-size:.9em; color:var(--dim); }
+  .steps { counter-reset:s; }
+  .steps .card { position:relative; padding-left:56px; margin-bottom:12px; }
+  .steps .card::before { counter-increment:s; content:counter(s); position:absolute; left:16px; top:16px; width:28px; height:28px; border-radius:50%; background:var(--card2); color:var(--acc); display:flex; align-items:center; justify-content:center; font-weight:700; }
+  code { background:var(--card2); border:1px solid var(--line); border-radius:6px; padding:1px 7px; font-size:.9em; }
+  .wl input { width:100%; max-width:340px; background:var(--card2); border:1px solid var(--line); color:var(--text); padding:11px 14px; border-radius:10px; font-size:.95em; }
+  .wl button { padding:11px 22px; border-radius:10px; border:0; background:linear-gradient(135deg,var(--acc),var(--acc2)); color:#08110c; font-weight:600; cursor:pointer; margin-left:8px; }
+  .wl .msg { font-size:.85em; color:var(--acc); min-height:1.4em; margin-top:8px; }
+  details { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 16px; margin-bottom:10px; }
+  summary { cursor:pointer; font-weight:600; }
+  details p { color:var(--dim); font-size:.92em; margin-top:8px; }
+  footer { padding:40px 0 60px; color:var(--dim); font-size:.85em; text-align:center; }
+  a { color:var(--acc2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>把你的 RSS 订阅和电子书<br>自动变成私人播客与有声书</h1>
+  <p class="sub">跑步、通勤时没东西听?「跑步听什么」每天把<b>你自己订阅的信息源</b>改写成双主播对谈播客,把 epub 电子书变成整本有声书连载——开源、零服务器、约 0 成本。</p>
+  <a class="cta main" href="https://github.com/paceboy/listenwhilerunning">GitHub 开源仓库 →</a>
+  <a class="cta ghost" href="#waitlist">托管版排队 ✉</a>
+</header>
+
+<section>
+  <h2>它做什么</h2>
+  <div class="grid">
+    <div class="card"><h3>📰 RSS → 对谈播客</h3><p>你订阅的 RSS、Reddit、任意文章链接,LLM 改写成两位主播的自然对谈,TTS 合成音频,每天早上自动出现在你的播客 App。</p></div>
+    <div class="card"><h3>📚 电子书 → 有声书</h3><p>epub/pdf/txt/html 上传即转,整本连载 + 一集"两位主播聊这本书"的导读;英文书可整本翻译成中文再听。上传几分钟后就能边生成边听。</p></div>
+    <div class="card"><h3>📡 标准播客 RSS</h3><p>Apple Podcasts、小宇宙、Pocket Casts……任何播客 App"通过 URL 关注"直接订阅,不锁定任何平台。</p></div>
+    <div class="card"><h3>🏃 跑步友好播放器</h3><p>PWA 网页播放器:锁屏控制、±15 秒、倍速、睡眠定时、离线缓存、断点续听,出门前打开一次即可离线听。</p></div>
+    <div class="card"><h3>🧱 零后台架构</h3><p>批处理管线 + 对象存储 + 静态页,全部跑在 Cloudflare 免费额度(R2 10GB、出口流量免费)。没有要维护的服务器。</p></div>
+    <div class="card"><h3>🔓 开源 AGPL-3.0</h3><p>代码完全开放,数据全在你自己的账号里。LLM 用任意 OpenAI 兼容端点,不填也能退化为原文直读。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>三步跑起来(自部署)</h2>
+  <div class="steps">
+    <div class="card"><h3>克隆并安装</h3><p><code>git clone</code> 仓库,<code>npm install</code>,在 .env 里填 Cloudflare 的两个值(注释里有指路)。</p></div>
+    <div class="card"><h3>一键部署</h3><p><code>npm run setup</code> 自动建存储、开公开域名、生成管理口令、部署播放器,最后打印你的播放器地址和播客订阅地址。</p></div>
+    <div class="card"><h3>开始听</h3><p><code>npm run pipeline</code> 生成第一批;配上 GitHub Actions 或 cron,以后每天自动更新。手机上传电子书,几分钟后边生成边听。</p></div>
+  </div>
+</section>
+
+<section id="waitlist">
+  <h2>不想自己部署?托管版排队中</h2>
+  <p style="color:var(--dim);margin-bottom:14px">我们在评估面向普通用户的托管版(注册即用、无需任何技术操作)。留下邮箱,上线第一时间通知你;排队人数直接决定我们做不做、多快做。</p>
+  <div class="wl">
+    <input id="em" type="email" placeholder="you@example.com"><button id="go">排队</button>
+    <div class="msg" id="wmsg"></div>
+  </div>
+</section>
+
+<section>
+  <h2>常见问题</h2>
+  <details><summary>和"AI 播客"产品(Recast、PlayNote)有什么区别?</summary><p>那批产品替用户承担 TTS 成本、做内容平台,大多已关停。本项目是"信息获取的音频界面":内容是你自己的订阅和书,成本跑在你自己的免费额度里,所以可以一直活着。</p></details>
+  <details><summary>RSS 转播客的音质怎么样?</summary><p>默认微软 Edge 神经网络声音(个人自用免费),中文自然度接近真人播报;资讯是双主播对谈形式,不是机械朗读。商用场景可替换为任何 TTS 服务(留有接口)。</p></details>
+  <details><summary>epub 转有声书要多久?</summary><p>生成速度约为播放速度的 10 倍:一本 20 万字的书全部生成约 2~3 小时,但上传几分钟后第 1 集就能听,边生成边听,追不上它。</p></details>
+  <details><summary>英文书能用中文听吗?</summary><p>能。内置整本翻译命令,英文 epub 翻成中文后再生成中文有声书;不翻译则自动切换英文声音朗读。</p></details>
+  <details><summary>需要花多少钱?</summary><p>存储和流量:Cloudflare 免费额度内(R2 10GB)。LLM 改写:按用量计费,每天 8 集资讯大约几毛钱;不配 LLM 也能用(原文直读)。TTS:个人自用免费。</p></details>
+</section>
+
+<footer>
+  <p><a href="https://github.com/paceboy/listenwhilerunning">GitHub</a> · AGPL-3.0 · listenwhilerunning · 跑步听什么</p>
+  <p style="margin-top:6px">Turn your RSS feeds and ebooks into a personal podcast & audiobooks. Open source, zero backend, ~$0/mo.</p>
+</footer>
+</div>
+<script>
+document.getElementById('go').onclick = function () {
+  var em = document.getElementById('em').value.trim(), m = document.getElementById('wmsg');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) { m.textContent = '邮箱格式不对'; return; }
+  m.textContent = '提交中…';
+  fetch('/api/wait', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: em }) })
+    .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+    .then(function (d) { m.textContent = '已排队,你是第 ' + d.n + ' 位。上线立刻通知你!'; })
+    .catch(function () { m.textContent = '提交失败,稍后再试'; });
+};
+</script>
+</body>
+</html>

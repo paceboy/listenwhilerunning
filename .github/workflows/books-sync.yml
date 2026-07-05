@@ -1,0 +1,35 @@
+# 书籍全量生成(手动触发)。
+# 注意:books/ 默认 gitignore(版权内容不进公开仓库)。想在 Actions 里转书,
+# 要么用私有 fork 并自行提交书籍文件,要么在自己机器上跑 npm run books:sync。
+# 整本书 TTS 需数小时,GitHub 单 job 上限 6 小时;超时重新触发即可断点续传。
+name: books-sync
+
+on:
+  workflow_dispatch:
+
+# 防同组任务重叠运行(与 src/lock.ts 的本机锁互补)
+concurrency:
+  group: lwr-books
+  cancel-in-progress: false
+
+jobs:
+  books:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run books:sync
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+          R2_PUBLIC_BASE: ${{ secrets.R2_PUBLIC_BASE }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

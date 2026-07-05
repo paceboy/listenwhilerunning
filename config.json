@@ -1,0 +1,27 @@
+{
+  "feed": {
+    "title": "跑步听什么",
+    "description": "个人 RSS 源的 AI 口播版 + 书籍连载,listenwhilerunning 私人管线生成",
+    "author": "paceboy",
+    "language": "zh-CN"
+  },
+  "sources": [
+    { "name": "Reddit r/indiehackers", "url": "https://www.reddit.com/r/indiehackers/hot/.rss", "group": "独立开发" },
+    { "name": "Show HN", "url": "https://hnrss.org/show", "group": "独立开发" },
+    { "name": "Reddit r/startups", "url": "https://www.reddit.com/r/startups/top/.rss?t=day", "group": "独立开发" },
+    { "name": "BBC 足球", "url": "https://feeds.bbci.co.uk/sport/football/rss.xml", "group": "世界杯", "filter": "World Cup" },
+    { "name": "ESPN 足球", "url": "https://www.espn.com/espn/rss/soccer/news", "group": "世界杯", "filter": "World Cup" },
+    { "name": "36氪", "url": "https://36kr.com/feed", "group": "科技" },
+    { "name": "少数派", "url": "https://sspai.com/feed", "group": "科技" },
+    { "name": "Hacker News", "url": "https://hnrss.org/frontpage", "group": "科技" },
+    { "name": "Reddit r/running", "url": "https://www.reddit.com/r/running/top/.rss?t=day", "group": "跑步" }
+  ],
+  "booksDir": "books",
+  "bookCharsPerEpisode": 2500,
+  "maxItemsPerRun": 8,
+  "feedEpisodeCount": 50,
+  "voice": "zh-CN-YunjianNeural",
+  "newsStyle": "dialogue",
+  "dialogueVoices": ["zh-CN-YunjianNeural", "zh-CN-XiaoxiaoNeural"],
+  "bucket": "lwr"
+}
