@@ -54,6 +54,15 @@ def render(p, all_pages):
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XZYYL861EF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+  gtag('config', 'G-XZYYL861EF');
+</script>
+
 <title>{html.escape(p["title"])}</title>
 <meta name="description" content="{html.escape(p["desc"])}">
 <link rel="canonical" href="{BASE}/{p["slug"]}">
