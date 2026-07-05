@@ -38,6 +38,7 @@ npm run pipeline          # generate your first batch (edit config.json sources 
 
 - **GitHub Actions (recommended, no server)**: fork, add your `.env` values as repository secrets, set repo variable `ENABLE_PIPELINE=true`. Runs daily at 22:30 UTC — see [.github/workflows/pipeline.yml](./.github/workflows/pipeline.yml)
 - **Your own machine**: cron / systemd timer running `npm run pipeline`; add a 3-minute `npm run poll` timer and player uploads / queued articles go live in minutes instead of next-day
+- GHA-only works for uploads too: also set variable `ENABLE_POLL=true` — a 15-minute workflow consumes uploaded books / queued URLs / newsletters (GitHub cron adds 5-15 min platform latency)
 
 ### Audiobooks
 
@@ -125,6 +126,7 @@ npm run pipeline          # 生成第一批资讯(config.json 改成你自己的
 
 - **GitHub Actions(推荐,无需服务器)**:fork 后配 `.env` 同名 secrets + 仓库变量 `ENABLE_PIPELINE=true`,每天 UTC 22:30(北京 06:30)自动跑
 - **自己的机器**:cron / systemd 定时 `npm run pipeline`;再配每 3 分钟的 `npm run poll`,上传书/投递文章分钟级生效
+- 纯 GHA 也能随传随听:Variables 再加 `ENABLE_POLL=true`,每 15 分钟自动消费上传的书/投递的 URL/newsletter(GitHub 定时有 5-15 分钟平台延迟)
 
 ### Newsletter 转播客(可选)
 

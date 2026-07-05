@@ -54,6 +54,15 @@ export class EpisodeProducer {
     }
     const audioPath = `episodes/${article.guid}.mp3`;
     await this.storage.uploadAudio(audioPath, audio);
+    // 逐字稿:播放器"文稿"按钮按需读取;失败只警告,不影响出集
+    try {
+      const doc = dialogue
+        ? dialogue.map((l) => (l.speaker === 0 ? "A: " : "B: ") + l.text).join("\n\n")
+        : script;
+      await this.storage.uploadFile(`transcripts/${article.guid}.txt`, Buffer.from(doc), "text/plain; charset=utf-8");
+    } catch (e) {
+      console.warn(`[produce] transcript upload failed: ${(e as Error).message}`);
+    }
     return {
       id: article.guid,
       title: article.title,

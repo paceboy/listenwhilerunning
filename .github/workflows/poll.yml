@@ -1,0 +1,38 @@
+# 随传随听(无服务器版):每 15 分钟消费播放器上传的电子书 + 投递的文章 URL + newsletter 收件箱。
+# 有常开机器的用户用 systemd/cron 跑 npm run poll(3 分钟级)更快;这个 workflow 给纯 GHA 用户,
+# fork 后 Variables 加 ENABLE_POLL=true 开启(不加则只能手动触发,避免没配 secrets 的 fork 白跑)。
+# 注:GitHub 定时任务实际触发常延迟 5-15 分钟,"几分钟后开听"会变成"一刻钟后开听",属平台特性。
+name: poll
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+# 与每日管线同组防重叠(两者都写 feed/state);books-sync 手动触发时请避开正在转书的 poll
+concurrency:
+  group: lwr-feed
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350 # 上传整本书时转换需数小时;空转秒退
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_POLL == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run poll
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_API_TOKEN: ${{ secrets.R2_API_TOKEN }}
+          R2_PUBLIC_BASE: ${{ secrets.R2_PUBLIC_BASE }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

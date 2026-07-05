@@ -114,6 +114,9 @@
   .parts li.playing .ps, .parts li.playing .pn { color: var(--acc); }
   .empty { color: var(--dim); font-size: .85em; padding: 20px 4px; text-align: center; }
   .ghead { padding: 14px 4px 4px; font-size: .8em; color: var(--acc); letter-spacing: .1em; border: 0; cursor: default; background: none; }
+  .doc { margin-left: auto; color: var(--dim); border: 1px solid var(--line); padding: 1px 8px; border-radius: 999px; cursor: pointer; flex: none; }
+  li.playing .doc, .doc:active { color: var(--acc); border-color: var(--acc); }
+  .script { margin-top: 10px; padding: 10px 12px; background: var(--card2); border-radius: 10px; font-size: .82em; line-height: 1.7; color: var(--dim); white-space: pre-wrap; max-height: 40vh; overflow-y: auto; cursor: auto; }
 
   /* ---- 设置 ---- */
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; position: relative; }
@@ -258,6 +261,7 @@ var I18N = {
     noCfgJs: 'config.js 缺失:在项目里运行 npm run setup 自动生成并重新部署',
     untitled: '(无标题)', unknownSrc: '未知来源', groupOther: '其他',
     epCount: '共 {n} 集,播完自动连播', feedEmpty: 'feed 里还没有内容', feedFail: '加载 feed 失败:',
+    btnDoc: '文稿', noDoc: '这一集还没有文稿(旧集或生成时未保存)',
     noBooks: '还没有书。',
     booksPendingHint: '书籍清单还没生成(首次全书转音频约需 1-2 小时,期间刷新本页可见已完成的集数)。',
     resume: '▶ 继续听:', introLbl: '导读', partN: '第 {n} 集', pnN: '{n} 集',
@@ -304,6 +308,7 @@ var I18N = {
     noCfgJs: 'config.js missing: run npm run setup in the project to generate it, then redeploy',
     untitled: '(untitled)', unknownSrc: 'unknown source', groupOther: 'Other',
     epCount: '{n} episodes; plays on to the next automatically', feedEmpty: 'No episodes in the feed yet', feedFail: 'Failed to load feed: ',
+    btnDoc: 'Text', noDoc: 'No transcript for this episode (generated before transcripts existed)',
     noBooks: 'No books yet.',
     booksPendingHint: 'Book list not generated yet (a full book takes ~1–2 hours on first run; refresh to see finished parts).',
     resume: '▶ Resume: ', introLbl: 'Intro', partN: 'Part {n}', pnN: '#{n}',
@@ -674,6 +679,22 @@ document.getElementById('langBtn').onclick = function () {
   restorePlaying();
 };
 
+// 逐字稿:按需拉 transcripts/<集id>.txt,旧集没有则提示
+function toggleDoc(li, audioUrl) {
+  var d = li.querySelector('.script');
+  if (d) { d.remove(); return; }
+  d = document.createElement('div');
+  d.className = 'script';
+  d.textContent = '…';
+  d.onclick = function (ev) { ev.stopPropagation(); };
+  li.appendChild(d);
+  var id = (audioUrl.split('/').pop() || '').replace(/\.mp3$/, '');
+  fetch(BASE + 'transcripts/' + id + '.txt').then(function (r) {
+    if (!r.ok) throw 0;
+    return r.text();
+  }).then(function (tx) { d.textContent = tx; }).catch(function () { d.textContent = t('noDoc'); });
+}
+
 // ---- 资讯:读 feed.xml ----
 function renderNews() {
   if (feedTitle) { document.title = feedTitle; document.getElementById('title').textContent = feedTitle; }
@@ -697,6 +718,11 @@ function renderNews() {
       li.querySelector('.src').textContent = e.src || t('unknownSrc');
       li.querySelector('.mm').textContent = (e.pub ? fmtBeijing(e.pub) : '') + ' · ' + tf('minLong', { n: mins(e.bytes) });
       var item = { title: e.title, url: e.url, li: li };
+      var doc = document.createElement('span');
+      doc.className = 'doc';
+      doc.textContent = t('btnDoc');
+      doc.onclick = (function (u) { return function (ev) { ev.stopPropagation(); toggleDoc(li, u); }; })(e.url);
+      li.querySelector('.m').appendChild(doc);
       li.onclick = (function (idx) { return function () { play(newsItems, idx); }; })(newsItems.length);
       listEl.appendChild(li);
       newsItems.push(item);
