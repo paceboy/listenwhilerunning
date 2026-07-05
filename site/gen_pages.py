@@ -2,9 +2,9 @@
 # 每个长尾关键词一页,共享模板;改 PAGES 后重跑 + wrangler 部署即可。
 import html, pathlib
 
-BASE = "https://lwr-site.pages.dev"  # 换自定义域名后改这里重新生成
+BASE = "https://runcast.app"
 GH = "https://github.com/paceboy/listenwhilerunning"
-DEMO = "https://lwr-demo.pages.dev"
+DEMO = "https://demo.runcast.app"
 
 CSS = """
 :root{--bg:#0b0f17;--card:#131a26;--card2:#1a2333;--line:#233047;--text:#e6ecf5;--dim:#8b98ac;--acc:#35d399;--acc2:#22d3ee}

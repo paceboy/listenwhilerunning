@@ -2,7 +2,7 @@
 
 Turn **your own RSS feeds and ebooks** into a personal podcast you can binge on runs and commutes — open source, zero backend, roughly **$0/month**.
 
-**[Live demo](https://lwr-demo.pages.dev)** · [Website](https://lwr-site.pages.dev) · [中文文档 ↓](#中文)
+**[Live demo](https://demo.runcast.app)** · [Website](https://runcast.app) · [中文文档 ↓](#中文)
 
 <p align="center">
   <img src="assets/screenshots/demo-news.png" alt="News tab: AI-generated dialogue episodes" width="300">
