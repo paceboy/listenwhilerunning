@@ -72,6 +72,12 @@ def render(p, all_pages):
 <title>{html.escape(p["title"])}</title>
 <meta name="description" content="{html.escape(p["desc"])}">
 <link rel="canonical" href="{BASE}/{p["slug"]}">
+<meta property="og:title" content="{html.escape(p["title"])}">
+<meta property="og:description" content="{html.escape(p["desc"])}">
+<meta property="og:image" content="{BASE}/og.png">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{BASE}/og.png">
 <script type="application/ld+json">{faq_jsonld(p["faqs"])}</script>
 <style>{CSS}</style>
 </head>
@@ -502,3 +508,11 @@ for name in ["index.html", "zh.html"]:
     t = (tpl_dir / name).read_text(encoding="utf8").replace("<!--ANALYTICS-->", ANALYTICS)
     (out / name).write_text(t, encoding="utf8")
     print("wrote", name)
+
+# 静态资产(og.png 等)
+import shutil
+static_dir = pathlib.Path(__file__).parent / "static"
+if static_dir.exists():
+    for f in static_dir.iterdir():
+        shutil.copy(f, out / f.name)
+        print("copied", f.name)
