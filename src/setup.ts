@@ -53,6 +53,10 @@ async function main() {
   const publicBase = `https://${domain}`;
   upsertEnv("R2_PUBLIC_BASE", publicBase);
   console.log(`   bucket "${config.bucket}" 就绪,公开域名 ${publicBase}`);
+  // 私有伴生桶(不开公开域名):收听进度/waitlist 等隐私数据
+  const priv = new R2Storage(R2_ACCOUNT_ID, R2_API_TOKEN, `${config.bucket}-priv`, "https://private");
+  await priv.ensureBucket();
+  console.log(`   私有桶 "${config.bucket}-priv" 就绪(无公开域名)`);
 
   console.log("== 2/4 管理口令 ==");
   let admin = process.env.LWR_ADMIN_TOKEN;
@@ -90,6 +94,11 @@ pages_build_output_dir = "docs"
 [[r2_buckets]]
 binding = "LWR"
 bucket_name = "${config.bucket}"
+
+# 私有桶(无公开域名):收听进度等隐私数据
+[[r2_buckets]]
+binding = "WL"
+bucket_name = "${config.bucket}-priv"
 `,
   );
   // wrangler 认 CLOUDFLARE_API_TOKEN;没单独配就复用 R2_API_TOKEN(.env.example 引导建的是 R2+Pages 双权限 token)

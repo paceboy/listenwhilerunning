@@ -177,6 +177,9 @@
     <div class="help" data-i18n="helpFeed"></div>
     <div class="hint" id="feedUrl"></div>
     <button class="pill" id="copyFeed" data-i18n="btnCopyFeed">复制</button>
+    <a class="pill" id="subApple" style="text-decoration:none;display:inline-block">Apple Podcasts</a>
+    <a class="pill" id="subOvercast" style="text-decoration:none;display:inline-block">Overcast</a>
+    <a class="pill" id="subPocket" style="text-decoration:none;display:inline-block">Pocket Casts</a>
   </div>
   <div class="card">
     <h2><span data-i18n="cardTok">管理口令</span> <button class="qm" aria-label="?">?</button></h2>
@@ -187,6 +190,8 @@
     <h2><span data-i18n="cardSrc">订阅源</span> <button class="qm" aria-label="?">?</button></h2>
     <div class="help" data-i18n="helpSrc"></div>
     <div id="srcList"></div>
+    <div class="hint" data-i18n="presetHint" style="margin-top:6px">常用源(点一下即加入,记得保存):</div>
+    <div id="srcPresets" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
     <button class="pill" id="addSrc" data-i18n="btnAddSrc">+ 加一个源</button>
     <button class="resume" id="saveCfg" style="margin-top:10px" data-i18n="btnSave">保存</button>
     <div class="msg" id="setMsg"></div>
@@ -221,6 +226,7 @@ var I18N = {
     cardFeed: '播客订阅地址',
     helpFeed: '这是你的私人播客 RSS 地址。想在<b>播客 App</b>(Apple Podcasts、小宇宙、Pocket Casts…)里收听,就复制它,在 App 里选「<b>通过 URL 添加节目</b>」贴进去——以后每天的新节目会自动推送到 App。只在本网页听的话,不用管它。',
     btnCopyFeed: '复制(在 Apple Podcasts 等 App 里"通过 URL 关注")',
+    presetHint: '常用源(点一下即加入,记得保存):',
     cardTok: '管理口令',
     helpTok: '<b>相当于这个电台的管理密码</b>,防止陌生人改动你的订阅源。部署时 <b>npm run setup</b> 会自动生成并打印,同时写在服务器 <b>.env</b> 文件的 <b>LWR_ADMIN_TOKEN</b> 一行(自己部署的去那里找,别人帮忙部署的问 TA 要)。<br>忘了想重设:打开 <b>https://dash.cloudflare.com</b> → 左侧「<b>Workers 和 Pages</b>」→ 点你的播放器项目 → <b>设置</b> → <b>变量和机密</b> → 编辑 <b>ADMIN_TOKEN</b>,改完回这里填新值。<br>填一次就保存在本机浏览器里,不会传到别处。<b>只是听节目的话不需要填</b>;想改下面的订阅源或转文章才需要。',
     phTok: '部署时设置的 ADMIN_TOKEN,只存在本机',
@@ -266,6 +272,7 @@ var I18N = {
     cardFeed: 'Podcast feed URL',
     helpFeed: 'This is your private podcast RSS URL. To listen in a <b>podcast app</b> (Apple Podcasts, Pocket Casts, Overcast…), copy it and use "<b>Follow a show by URL</b>" in the app — new episodes will then arrive in the app automatically. If you only listen on this page, ignore it.',
     btnCopyFeed: 'Copy (then "Follow by URL" in your podcast app)',
+    presetHint: 'Popular sources (tap to add, then save):',
     cardTok: 'Admin token',
     helpTok: '<b>The admin password of your station</b> — it stops strangers from changing your feeds. <b>npm run setup</b> generates and prints it at deploy time, and writes it to the <b>LWR_ADMIN_TOKEN</b> line of the server’s <b>.env</b> file (check there if you deployed it yourself; otherwise ask whoever deployed it for you).<br>Forgot it? Open <b>https://dash.cloudflare.com</b> → <b>Workers &amp; Pages</b> → your player project → <b>Settings</b> → <b>Variables and Secrets</b> → edit <b>ADMIN_TOKEN</b>, then paste the new value here.<br>It is stored only in this browser. <b>You don’t need it just to listen</b> — only to edit feeds or convert content below.',
     phTok: 'ADMIN_TOKEN set at deploy time; stored only on this device',
@@ -415,13 +422,59 @@ setInterval(function () {
   }
 }, 1000);
 
-// 书籍:每 5 秒记住播到哪(哪本书、第几集、几分几秒)
+// 书籍:每 5 秒记住播到哪(哪本书、第几集、几分几秒);at 时间戳供跨设备合并
 setInterval(function () {
   var it = q.list[q.i];
   if (it && it.bookId && !a.paused) {
-    localStorage.setItem('bk-' + it.bookId, JSON.stringify({ p: it.p, t: Math.floor(a.currentTime) }));
+    localStorage.setItem('bk-' + it.bookId, JSON.stringify({ p: it.p, t: Math.floor(a.currentTime), at: Date.now() }));
+    scheduleProgressPush();
   }
 }, 5000);
+
+// ---- 跨设备进度同步(填了管理口令才生效;存私有桶,不经公开域名)----
+var progressPushTimer = null;
+function scheduleProgressPush() {
+  if (!localStorage.getItem('admtok')) return;
+  clearTimeout(progressPushTimer);
+  progressPushTimer = setTimeout(pushProgress, 8000);
+}
+function collectProgress() {
+  var m = {};
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if (k && k.indexOf('bk-') === 0) {
+      try { m[k] = JSON.parse(localStorage.getItem(k)); } catch (e) {}
+    }
+  }
+  return m;
+}
+function pushProgress() {
+  fetch('/api/progress', { method: 'PUT', headers: admHeaders(true), body: JSON.stringify(collectProgress()) }).catch(function () {});
+}
+function pullProgress() {
+  if (!localStorage.getItem('admtok')) return;
+  fetch('/api/progress', { headers: admHeaders() }).then(function (r) {
+    if (!r.ok) throw 0;
+    return r.json();
+  }).then(function (remote) {
+    var localNewer = false;
+    Object.keys(remote || {}).forEach(function (k) {
+      if (k.indexOf('bk-') !== 0) return;
+      var loc = null;
+      try { loc = JSON.parse(localStorage.getItem(k)); } catch (e) {}
+      if (!loc || (remote[k].at || 0) > (loc.at || 0)) {
+        localStorage.setItem(k, JSON.stringify(remote[k]));
+      } else if (loc && (loc.at || 0) > (remote[k].at || 0)) {
+        localNewer = true;
+      }
+    });
+    var rk = Object.keys(remote || {});
+    // 本地有云端没有的书进度,或本地更新 → 回推一次
+    if (localNewer || Object.keys(collectProgress()).some(function (k) { return rk.indexOf(k) < 0; })) pushProgress();
+    if (typeof booksData !== 'undefined' && booksData) { booksEl.innerHTML = ''; renderBooks(); }
+  }).catch(function () {});
+}
+setTimeout(pullProgress, 0); // 等 #tok 口令处理完再拉取
 
 var setEl = document.getElementById('set');
 document.getElementById('tabs').onclick = function (e) {
@@ -501,6 +554,38 @@ function loadPendingBooks() {
     }
   }).catch(function () {});
 }
+// 一键订阅链接(把 https feed 转成各 App 的 scheme)
+(function () {
+  var feed = BASE + 'feed.xml';
+  var bare = feed.replace(/^https?:\/\//, '');
+  document.getElementById('subApple').href = 'podcast://' + bare;
+  document.getElementById('subOvercast').href = 'overcast://x-callback-url/add?url=' + encodeURIComponent(feed);
+  document.getElementById('subPocket').href = 'pktc://subscribe/' + bare;
+})();
+// 常用源模板:点 chip 填入一行(仍需点保存)
+var SRC_PRESETS = [
+  { name: 'Hacker News', url: 'https://hnrss.org/frontpage' },
+  { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+  { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml' },
+  { name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index' },
+  { name: 'TechCrunch', url: 'https://techcrunch.com/feed/' },
+  { name: 'r/technology', url: 'https://www.reddit.com/r/technology/top/.rss?t=day' },
+  { name: '少数派', url: 'https://sspai.com/feed' },
+  { name: '36氪', url: 'https://36kr.com/feed' }
+];
+(function () {
+  var box = document.getElementById('srcPresets');
+  SRC_PRESETS.forEach(function (p) {
+    var b = document.createElement('button');
+    b.className = 'pill';
+    b.textContent = '+ ' + p.name;
+    b.onclick = function () {
+      var dup = [].some.call(srcList.querySelectorAll('.su'), function (el) { return el.value.trim() === p.url; });
+      if (!dup) srcRow(p.name, p.url);
+    };
+    box.appendChild(b);
+  });
+})();
 document.getElementById('copyFeed').onclick = function () {
   navigator.clipboard.writeText(BASE + 'feed.xml').then(function () { msg(setMsg, t('copied')); });
 };
