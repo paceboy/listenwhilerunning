@@ -14,9 +14,13 @@ export default {
         .replace(/<\/(p|div|h[1-6]|li|tr)>/gi, "\n")
         .replace(/<[^>]+>/g, " ")
         .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
+        .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n)) // Substack/Mailchimp 满篇 &#8217; 弯引号
+        .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
         .replace(/&lt;/g, "<")
         .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;|&apos;/g, "'")
+        .replace(/&amp;/g, "&") // 必须最后:先解会把 &amp;lt; 双重解码成 <
         .replace(/[ \t]+/g, " ")
         .replace(/\n{3,}/g, "\n\n")
         .trim();

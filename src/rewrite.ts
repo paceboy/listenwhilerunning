@@ -44,7 +44,31 @@ const SUMMARY_PROMPT = `用一句话概括下面这段书稿的内容(不超过 
 书稿片段:
 {content}`;
 
-/** 兼容通道单轮对话,失败返回 null(锦上添花型能力共用,不走 Gemini 直连) */
+/** Gemini 直连单轮对话,失败返回 null(只配 Gemini 的用户走这条) */
+async function geminiChat(prompt: string, config: RewriteConfig): Promise<string | null> {
+  if (!config.geminiApiKey) return null;
+  for (const model of MODELS) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.geminiApiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        },
+      );
+      if (!res.ok) continue;
+      const data = (await res.json()) as {
+        candidates?: { content?: { parts?: { text?: string }[] } }[];
+      };
+      const out = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("").trim();
+      if (out) return out;
+    } catch {}
+  }
+  return null;
+}
+
+/** 兼容通道单轮对话,失败返回 null(锦上添花型能力共用) */
 async function compatChat(prompt: string, config: RewriteConfig): Promise<string | null> {
   if (!config.compat) return null;
   const { baseUrl, apiKey, model } = config.compat;
@@ -149,10 +173,8 @@ export async function briefScript(
   const content = items
     .map((a, i) => `${i + 1}. 【${a.sourceName}】${a.title}\n${a.text.replace(/\s+/g, " ").slice(0, 600)}`)
     .join("\n\n");
-  return compatChat(
-    BRIEF_PROMPT.replace("{n}", String(items.length)).replace("{content}", content.slice(0, 12000)),
-    config,
-  );
+  const prompt = BRIEF_PROMPT.replace("{n}", String(items.length)).replace("{content}", content.slice(0, 12000));
+  return (await compatChat(prompt, config)) ?? geminiChat(prompt, config);
 }
 
 export async function rewriteToScript(article: Article, config: RewriteConfig): Promise<string> {

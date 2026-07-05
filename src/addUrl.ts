@@ -4,7 +4,7 @@ import { acquireLock } from "./lock.js";
 import { pathToFileURL } from "node:url";
 import { makeStore, makePrivStore, loadConfig } from "./store.js";
 import { fetchUrlArticle } from "./urlArticle.js";
-import { clearInbox, readInbox } from "./inbox.js";
+import { clearInbox, failInbox, readInbox } from "./inbox.js";
 import { EpisodeProducer, ensureCover, makeRewriteConfig, publishFeed, resolveRemoteConfig } from "./produce.js";
 import type { AppConfig, Episode } from "./types.js";
 
@@ -27,13 +27,15 @@ export async function runAdd(cliUrls: string[]) {
   const priv = makePrivStore(config.bucket);
   let fromQueue = false;
   let urls = cliUrls;
+  let queueSnapshot: string[] = [];
   let inboxItems: import("./inbox.js").InboxItem[] = [];
   if (urls.length === 0) {
     const queue = await storage.loadJson<{ urls?: string[] }>("queue.json");
-    urls = (queue?.urls ?? []).filter((u) => /^https?:\/\//.test(u));
+    queueSnapshot = queue?.urls ?? [];
+    urls = queueSnapshot.filter((u) => /^https?:\/\//.test(u));
     fromQueue = true;
     inboxItems = priv ? await readInbox(priv) : [];
-    if (urls.length === 0 && inboxItems.length === 0) {
+    if (urls.length === 0 && inboxItems.length === 0 && queueSnapshot.length === 0) {
       console.log("[add] nothing to do (queue.json empty, inbox empty)");
       return;
     }
@@ -44,15 +46,22 @@ export async function runAdd(cliUrls: string[]) {
   const producer = new EpisodeProducer(config, makeRewriteConfig(config), storage);
   const newEpisodes: Episode[] = [];
 
+  // 邮件是唯一副本:成功/已入库的才删,失败的留桶重试(见 failInbox)
+  const doneInbox: import("./inbox.js").InboxItem[] = [];
   for (const it of inboxItems) {
-    if (seen.has(it.article.guid)) continue;
+    if (seen.has(it.article.guid)) {
+      doneInbox.push(it);
+      continue;
+    }
     try {
       console.log(`[add] newsletter: "${it.article.title}" from ${it.article.sourceName}`);
       const ep = await producer.produce(it.article);
       newEpisodes.push(ep);
       seen.add(it.article.guid);
+      doneInbox.push(it);
     } catch (e) {
       console.error(`[add] newsletter failed: ${(e as Error).message}`);
+      if (priv) await failInbox(priv, it);
     }
   }
 
@@ -78,8 +87,13 @@ export async function runAdd(cliUrls: string[]) {
     const feedUrl = await publishFeed(config, storage, state, newEpisodes);
     console.log(`[add] done: +${newEpisodes.length} episodes, feed: ${feedUrl}`);
   }
-  if (fromQueue) await storage.uploadJson("queue.json", { urls: [] });
-  if (priv && inboxItems.length) await clearInbox(priv, inboxItems);
+  // 只移除本轮快照里的 URL——生成期间用户新投递的不能被清掉
+  if (fromQueue && queueSnapshot.length) {
+    const processed = new Set(queueSnapshot);
+    const cur = await storage.loadJson<{ urls?: string[] }>("queue.json");
+    await storage.uploadJson("queue.json", { urls: (cur?.urls ?? []).filter((u) => !processed.has(u)) });
+  }
+  if (priv && doneInbox.length) await clearInbox(priv, doneInbox);
 }
 
 // 直接 `npm run add` 时执行;被 poll.ts 当模块 import 时不自动跑

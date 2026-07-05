@@ -432,11 +432,12 @@ setInterval(function () {
 }, 5000);
 
 // ---- 跨设备进度同步(填了管理口令才生效;存私有桶,不经公开域名)----
-var progressPushTimer = null;
+// 节流而非防抖:播放中每 5 秒有新进度,防抖会被无限重置永不触发。
+var progressPushTimer = null, progressPushedAt = 0;
 function scheduleProgressPush() {
   if (!localStorage.getItem('admtok')) return;
-  clearTimeout(progressPushTimer);
-  progressPushTimer = setTimeout(pushProgress, 8000);
+  if (Date.now() - progressPushedAt > 30000) { pushProgress(); return; }
+  if (!progressPushTimer) progressPushTimer = setTimeout(pushProgress, 8000);
 }
 function collectProgress() {
   var m = {};
@@ -449,8 +450,18 @@ function collectProgress() {
   return m;
 }
 function pushProgress() {
-  fetch('/api/progress', { method: 'PUT', headers: admHeaders(true), body: JSON.stringify(collectProgress()) }).catch(function () {});
+  clearTimeout(progressPushTimer); progressPushTimer = null; progressPushedAt = Date.now();
+  var body = JSON.stringify(collectProgress());
+  if (body.length > 60000) return;
+  // keepalive:手机划掉 PWA/切后台时请求仍能发出,否则整段收听进度丢失
+  fetch('/api/progress', { method: 'PUT', headers: admHeaders(true), body: body, keepalive: true }).catch(function () {});
 }
+addEventListener('pagehide', function () {
+  if (localStorage.getItem('admtok') && q.list[q.i] && q.list[q.i].bookId) pushProgress();
+});
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden' && localStorage.getItem('admtok') && progressPushTimer) pushProgress();
+});
 function pullProgress() {
   if (!localStorage.getItem('admtok')) return;
   fetch('/api/progress', { headers: admHeaders() }).then(function (r) {
@@ -459,7 +470,7 @@ function pullProgress() {
   }).then(function (remote) {
     var localNewer = false;
     Object.keys(remote || {}).forEach(function (k) {
-      if (k.indexOf('bk-') !== 0) return;
+      if (k.indexOf('bk-') !== 0 || !remote[k] || typeof remote[k] !== 'object') return;
       var loc = null;
       try { loc = JSON.parse(localStorage.getItem(k)); } catch (e) {}
       if (!loc || (remote[k].at || 0) > (loc.at || 0)) {
@@ -508,7 +519,7 @@ if (mTok) {
   history.replaceState(null, '', location.pathname + location.search);
 }
 admTok.value = localStorage.getItem('admtok') || '';
-admTok.onchange = function () { localStorage.setItem('admtok', this.value.trim()); settingsLoaded = false; loadSettings(); };
+admTok.onchange = function () { localStorage.setItem('admtok', this.value.trim()); settingsLoaded = false; loadSettings(); pullProgress(); };
 function admHeaders(json) {
   var h = { 'x-admin-token': localStorage.getItem('admtok') || '' };
   if (json) h['content-type'] = 'application/json';

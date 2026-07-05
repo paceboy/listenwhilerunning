@@ -25,6 +25,8 @@ export interface AppConfig {
   voiceEn?: string;
   /** 每日资讯 ≥3 条时自动生成「今日速览」简报集(默认开,false 关闭) */
   dailyBrief?: boolean;
+  /** 晨间简报的日期时区(IANA 名,如 Asia/Shanghai);UTC 服务器夜里跑的是听众"明早"的简报 */
+  timezone?: string;
   /** 资讯口播形式:"dialogue" 双主播对话 / "narration" 单人直读(默认)。书籍连载始终直读 */
   newsStyle?: "narration" | "dialogue";
   /** dialogue 模式的声音 [主持人, 嘉宾];缺省或不足两个则自动退回单人旁白 */

@@ -13,8 +13,14 @@ export async function onRequestPost({ request, env }) {
   await env.WL.put(`waitlist/${email}`, JSON.stringify({ at: new Date().toISOString() }), {
     httpMetadata: { contentType: "application/json" },
   });
-  const listed = await env.WL.list({ prefix: "waitlist/" });
-  return new Response(JSON.stringify({ n: listed.objects.length }), {
+  // binding list() 单页上限 1000,必须翻页,否则计数在 1000 封顶
+  let n = 0, cursor;
+  do {
+    const listed = await env.WL.list({ prefix: "waitlist/", cursor });
+    n += listed.objects.length;
+    cursor = listed.truncated ? listed.cursor : undefined;
+  } while (cursor);
+  return new Response(JSON.stringify({ n }), {
     headers: { "content-type": "application/json" },
   });
 }

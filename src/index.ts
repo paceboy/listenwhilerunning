@@ -4,7 +4,7 @@ import { fetchArticles } from "./fetchItems.js";
 import { makeStore, makePrivStore, loadConfig } from "./store.js";
 import { fetchUrlArticle, urlGuid } from "./urlArticle.js";
 import { briefScript } from "./rewrite.js";
-import { clearInbox, readInbox } from "./inbox.js";
+import { clearInbox, failInbox, readInbox } from "./inbox.js";
 import { DialogueTts, parseDialogue } from "./tts.js";
 import { EpisodeProducer, ensureCover, makeRewriteConfig, publishFeed, resolveRemoteConfig } from "./produce.js";
 import { syncBooksAll } from "./syncBooks.js";
@@ -106,21 +106,41 @@ async function main() {
   if (queue.length > 0) {
     const producer = new EpisodeProducer(config, makeRewriteConfig(config), storage);
     const newEpisodes: Episode[] = [];
+    const inboxByGuid = new Map(inboxItems.map((i) => [i.article.guid, i]));
+    const doneInbox: typeof inboxItems = [];
+    const okArticles: Article[] = [];
 
     for (const article of queue) {
+      let ok = false;
       try {
         const ep = await producer.produce(article);
         newEpisodes.push(ep);
+        okArticles.push(article);
+        ok = true;
         console.log(`[pipeline] episode ready: ${ep.title} (${Math.round(ep.audioBytes / 1024)} KB)`);
       } catch (e) {
         console.error(`[pipeline] failed for "${article.title}": ${(e as Error).message}`);
       }
-      // 资讯无论成败都标记已见,坏文章不重试,避免每天卡在同一篇上
-      seen.add(article.guid);
+      const ib = inboxByGuid.get(article.guid);
+      if (ib) {
+        // 邮件是唯一副本:失败不标已见、留桶重试(3 次后放弃),成功才删
+        if (ok) {
+          seen.add(article.guid);
+          doneInbox.push(ib);
+        } else if (priv) {
+          await failInbox(priv, ib);
+        }
+      } else {
+        // 资讯/投递 URL 无论成败都标记已见,坏文章不重试,避免每天卡在同一篇上
+        seen.add(article.guid);
+      }
     }
 
-    // 今日速览:≥3 条资讯时,把当天内容浓缩成一集对话简报置顶(同日重跑不重复)
-    const briefId = `brief-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`;
+    // 今日速览:≥3 条资讯时,把当天内容浓缩成一集对话简报置顶(同日重跑不重复)。
+    // 日期按听众时区算(UTC 服务器 22:30 跑的是听众"明早"的简报,用 UTC 会差一天)。
+    const tz = config.timezone || "Asia/Shanghai";
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
+    const briefId = `brief-${today.replace(/-/g, "")}`;
     if (
       config.dailyBrief !== false &&
       newEpisodes.length >= 3 &&
@@ -129,7 +149,7 @@ async function main() {
     ) {
       try {
         const script = await briefScript(
-          queue.map((a) => ({ title: a.title, text: a.text, sourceName: a.sourceName })),
+          okArticles.map((a) => ({ title: a.title, text: a.text, sourceName: a.sourceName })),
           makeRewriteConfig(config),
         );
         const dialogue = script ? parseDialogue(script) : null;
@@ -138,14 +158,13 @@ async function main() {
           const audio = await tts.synthesize(dialogue);
           const audioPath = `episodes/${briefId}.mp3`;
           await storage.uploadAudio(audioPath, audio);
-          const d = new Date();
           newEpisodes.unshift({
             id: briefId,
-            title: `今日速览 · ${newEpisodes.length} 条(${d.getMonth() + 1}月${d.getDate()}日)`,
+            title: `今日速览 · ${newEpisodes.length} 条(${+today.slice(5, 7)}月${+today.slice(8, 10)}日)`,
             description: dialogue.map((l) => l.text).join(" ").slice(0, 200),
             link: "",
             sourceName: "今日速览",
-            pubDate: d.toISOString(),
+            pubDate: new Date().toISOString(),
             audioPath,
             audioBytes: audio.length,
             group: "简报",
@@ -161,8 +180,13 @@ async function main() {
 
     state.seen = [...seen].slice(-SEEN_CAP);
     const feedUrl = await publishFeed(config, storage, state, newEpisodes);
-    if (urlQueue?.urls?.length) await storage.uploadJson("queue.json", { urls: [] });
-    if (priv && inboxItems.length) await clearInbox(priv, inboxItems);
+    // 只移除本轮快照里的 URL——长任务期间用户新投递的不能被清掉
+    if (urlQueue?.urls?.length) {
+      const processed = new Set(urlQueue.urls);
+      const cur = await storage.loadJson<{ urls?: string[] }>("queue.json");
+      await storage.uploadJson("queue.json", { urls: (cur?.urls ?? []).filter((u) => !processed.has(u)) });
+    }
+    if (priv && doneInbox.length) await clearInbox(priv, doneInbox);
 
     console.log(`[pipeline] done: +${newEpisodes.length} episodes, feed has ${state.episodes.length}`);
     console.log(`[pipeline] feed URL: ${feedUrl}`);
