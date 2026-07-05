@@ -19,3 +19,8 @@ export function makeStore(bucket: string): ObjectStore {
 export function loadConfig(): AppConfig {
   return JSON.parse(readFileSync(new URL("../config.json", import.meta.url), "utf8")) as AppConfig;
 }
+
+/** 私有伴生桶(<bucket>-priv,无公开域名):收听进度/newsletter 收件箱等隐私数据。仅 R2 支持。 */
+export function makePrivStore(bucket: string): ObjectStore | null {
+  return storageFromEnv(`${bucket}-priv`);
+}

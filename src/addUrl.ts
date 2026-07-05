@@ -2,8 +2,9 @@ import "dotenv/config";
 import { readFileSync, realpathSync } from "node:fs";
 import { acquireLock } from "./lock.js";
 import { pathToFileURL } from "node:url";
-import { makeStore, loadConfig } from "./store.js";
+import { makeStore, makePrivStore, loadConfig } from "./store.js";
 import { fetchUrlArticle } from "./urlArticle.js";
+import { clearInbox, readInbox } from "./inbox.js";
 import { EpisodeProducer, ensureCover, makeRewriteConfig, publishFeed, resolveRemoteConfig } from "./produce.js";
 import type { AppConfig, Episode } from "./types.js";
 
@@ -23,14 +24,17 @@ export async function runAdd(cliUrls: string[]) {
   config = await resolveRemoteConfig(config, storage);
   await ensureCover(storage);
 
+  const priv = makePrivStore(config.bucket);
   let fromQueue = false;
   let urls = cliUrls;
+  let inboxItems: import("./inbox.js").InboxItem[] = [];
   if (urls.length === 0) {
     const queue = await storage.loadJson<{ urls?: string[] }>("queue.json");
     urls = (queue?.urls ?? []).filter((u) => /^https?:\/\//.test(u));
     fromQueue = true;
-    if (urls.length === 0) {
-      console.log("[add] no urls given and queue.json empty, nothing to do");
+    inboxItems = priv ? await readInbox(priv) : [];
+    if (urls.length === 0 && inboxItems.length === 0) {
+      console.log("[add] nothing to do (queue.json empty, inbox empty)");
       return;
     }
   }
@@ -39,6 +43,18 @@ export async function runAdd(cliUrls: string[]) {
   const seen = new Set(state.seen);
   const producer = new EpisodeProducer(config, makeRewriteConfig(config), storage);
   const newEpisodes: Episode[] = [];
+
+  for (const it of inboxItems) {
+    if (seen.has(it.article.guid)) continue;
+    try {
+      console.log(`[add] newsletter: "${it.article.title}" from ${it.article.sourceName}`);
+      const ep = await producer.produce(it.article);
+      newEpisodes.push(ep);
+      seen.add(it.article.guid);
+    } catch (e) {
+      console.error(`[add] newsletter failed: ${(e as Error).message}`);
+    }
+  }
 
   for (const url of urls) {
     try {
@@ -63,6 +79,7 @@ export async function runAdd(cliUrls: string[]) {
     console.log(`[add] done: +${newEpisodes.length} episodes, feed: ${feedUrl}`);
   }
   if (fromQueue) await storage.uploadJson("queue.json", { urls: [] });
+  if (priv && inboxItems.length) await clearInbox(priv, inboxItems);
 }
 
 // 直接 `npm run add` 时执行;被 poll.ts 当模块 import 时不自动跑

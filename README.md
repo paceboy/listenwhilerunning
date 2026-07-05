@@ -49,6 +49,10 @@ npm run books:sync        # generates the whole book (interruptible, resumes); d
 npm run books:translate -- SomeEnglishBook   # listen to an English book as a Chinese audiobook
 ```
 
+### Newsletters → podcast (optional)
+
+Give your pipeline an email address: Cloudflare Email Routing → the included [email-worker](./email-worker) parses incoming newsletters into a private R2 inbox, and the pipeline turns them into episodes (group "邮件"/Mail) within minutes. Setup: deploy the worker (`cd email-worker && npx wrangler deploy`), then in the Cloudflare dash enable Email Routing on your domain and route an address (e.g. `read@yourdomain`) to the `lwr-mail` worker. Subscribe your newsletters with that address.
+
 ### Single article, right now
 
 Paste a URL in the player settings, or:
@@ -116,6 +120,10 @@ npm run pipeline          # 生成第一批资讯(config.json 改成你自己的
 
 - **GitHub Actions(推荐,无需服务器)**:fork 后配 `.env` 同名 secrets + 仓库变量 `ENABLE_PIPELINE=true`,每天 UTC 22:30(北京 06:30)自动跑
 - **自己的机器**:cron / systemd 定时 `npm run pipeline`;再配每 3 分钟的 `npm run poll`,上传书/投递文章分钟级生效
+
+### Newsletter 转播客(可选)
+
+给管线一个专属邮箱:部署 [email-worker](./email-worker)(`cd email-worker && npx wrangler deploy`),在 Cloudflare 后台开启域名的 Email Routing,把某个地址(如 `read@你的域名`)路由到 `lwr-mail` worker;用这个地址订阅 newsletter,来信几分钟内自动变成播客集(分组「邮件」)。
 
 ### 听书 / 单篇转换
 

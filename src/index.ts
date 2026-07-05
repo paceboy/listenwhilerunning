@@ -1,8 +1,11 @@
 import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { fetchArticles } from "./fetchItems.js";
-import { makeStore, loadConfig } from "./store.js";
+import { makeStore, makePrivStore, loadConfig } from "./store.js";
 import { fetchUrlArticle, urlGuid } from "./urlArticle.js";
+import { briefScript } from "./rewrite.js";
+import { clearInbox, readInbox } from "./inbox.js";
+import { DialogueTts, parseDialogue } from "./tts.js";
 import { EpisodeProducer, ensureCover, makeRewriteConfig, publishFeed, resolveRemoteConfig } from "./produce.js";
 import { syncBooksAll } from "./syncBooks.js";
 import { acquireLock } from "./lock.js";
@@ -82,8 +85,12 @@ async function main() {
     }
   }
 
+  // Newsletter 收件箱(私有桶,Email Worker 写入),不占每日配额
+  const priv = makePrivStore(config.bucket);
+  const inboxItems = priv ? (await readInbox(priv)).filter((i) => !seen.has(i.article.guid)) : [];
+
   // 书籍不走每日连载,由 npm run books:sync 全量生成(见 syncBooks.ts)
-  const queue = [...queuedArticles, ...fresh];
+  const queue = [...queuedArticles, ...inboxItems.map((i) => i.article), ...fresh];
   console.log(
     `[pipeline] ${articles.length} fetched, ${fresh.length} new (limit ${limit}), ${queuedArticles.length} queued urls`,
   );
@@ -112,9 +119,50 @@ async function main() {
       seen.add(article.guid);
     }
 
+    // 今日速览:≥3 条资讯时,把当天内容浓缩成一集对话简报置顶(同日重跑不重复)
+    const briefId = `brief-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`;
+    if (
+      config.dailyBrief !== false &&
+      newEpisodes.length >= 3 &&
+      (config.dialogueVoices?.length ?? 0) >= 2 &&
+      !state.episodes.some((e) => e.id === briefId)
+    ) {
+      try {
+        const script = await briefScript(
+          queue.map((a) => ({ title: a.title, text: a.text, sourceName: a.sourceName })),
+          makeRewriteConfig(config),
+        );
+        const dialogue = script ? parseDialogue(script) : null;
+        if (dialogue) {
+          const tts = new DialogueTts([config.dialogueVoices![0], config.dialogueVoices![1]]);
+          const audio = await tts.synthesize(dialogue);
+          const audioPath = `episodes/${briefId}.mp3`;
+          await storage.uploadAudio(audioPath, audio);
+          const d = new Date();
+          newEpisodes.unshift({
+            id: briefId,
+            title: `今日速览 · ${newEpisodes.length} 条(${d.getMonth() + 1}月${d.getDate()}日)`,
+            description: dialogue.map((l) => l.text).join(" ").slice(0, 200),
+            link: "",
+            sourceName: "今日速览",
+            pubDate: d.toISOString(),
+            audioPath,
+            audioBytes: audio.length,
+            group: "简报",
+          });
+          console.log(`[pipeline] daily brief ready (${Math.round(audio.length / 1024)} KB)`);
+        } else {
+          console.warn("[pipeline] daily brief skipped: script/parse failed");
+        }
+      } catch (e) {
+        console.warn(`[pipeline] daily brief failed: ${(e as Error).message}`);
+      }
+    }
+
     state.seen = [...seen].slice(-SEEN_CAP);
     const feedUrl = await publishFeed(config, storage, state, newEpisodes);
     if (urlQueue?.urls?.length) await storage.uploadJson("queue.json", { urls: [] });
+    if (priv && inboxItems.length) await clearInbox(priv, inboxItems);
 
     console.log(`[pipeline] done: +${newEpisodes.length} episodes, feed has ${state.episodes.length}`);
     console.log(`[pipeline] feed URL: ${feedUrl}`);

@@ -23,6 +23,8 @@ export interface AppConfig {
   voice: string;
   /** 英文书用的声音(书籍按 CJK 占比自动检测语言),缺省 en-US-ChristopherNeural */
   voiceEn?: string;
+  /** 每日资讯 ≥3 条时自动生成「今日速览」简报集(默认开,false 关闭) */
+  dailyBrief?: boolean;
   /** 资讯口播形式:"dialogue" 双主播对话 / "narration" 单人直读(默认)。书籍连载始终直读 */
   newsStyle?: "narration" | "dialogue";
   /** dialogue 模式的声音 [主持人, 嘉宾];缺省或不足两个则自动退回单人旁白 */

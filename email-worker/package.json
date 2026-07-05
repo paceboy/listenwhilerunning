@@ -1,0 +1,5 @@
+{
+  "name": "lwr-mail",
+  "private": true,
+  "dependencies": { "postal-mime": "^2.3.2" }
+}

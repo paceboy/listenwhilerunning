@@ -158,3 +158,4 @@ docs/config.js
 wrangler.toml
 site/public/
 site/ga.txt
+email-worker/node_modules/

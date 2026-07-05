@@ -129,6 +129,32 @@ export async function bookIntroScript(
   return compatChat(tpl.replace("{name}", name).replace("{content}", samples), config);
 }
 
+const BRIEF_PROMPT = `你是一档双人晨间播客的撰稿人。下面是今天的 {n} 条资讯(每条会在后续单集里详细展开),请写一期"今日速览"的对话脚本(约 500-800 字,3-5 分钟),让听众用几分钟知道今天都有什么、哪几条值得点开详细听。
+
+角色:A 是主持人,B 是编辑。
+要求:
+- 每句台词单独一行,以"A:"或"B:"开头;除台词外不要输出任何东西(不要标题、不要 markdown)
+- 每条资讯用一两句话带过核心信息,不展开细节;最后 B 推荐今天最值得完整听的 1-2 条并说为什么
+- 只依据给出的内容陈述,不要编造;对话自然口语化,直接进入话题,不要"欢迎收听"式开场
+- 数字和英文名词按中文口语习惯读出
+
+今日资讯列表:
+{content}`;
+
+/** 今日速览:把当天全部资讯浓缩成一集对话简报(标题+摘要喂入,单条截断防超长) */
+export async function briefScript(
+  items: { title: string; text: string; sourceName: string }[],
+  config: RewriteConfig,
+): Promise<string | null> {
+  const content = items
+    .map((a, i) => `${i + 1}. 【${a.sourceName}】${a.title}\n${a.text.replace(/\s+/g, " ").slice(0, 600)}`)
+    .join("\n\n");
+  return compatChat(
+    BRIEF_PROMPT.replace("{n}", String(items.length)).replace("{content}", content.slice(0, 12000)),
+    config,
+  );
+}
+
 export async function rewriteToScript(article: Article, config: RewriteConfig): Promise<string> {
   const fallback = () => {
     const text = article.text.slice(0, 800);

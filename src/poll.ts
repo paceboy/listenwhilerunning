@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { readFileSync } from "node:fs";
-import { makeStore, loadConfig } from "./store.js";
+import { makeStore, makePrivStore, loadConfig } from "./store.js";
 import { runAdd } from "./addUrl.js";
 import { syncBooksAll } from "./syncBooks.js";
 import type { AppConfig } from "./types.js";
@@ -17,11 +17,13 @@ async function main() {
   const config = loadConfig();
   const storage = makeStore(config.bucket);
 
-  const [queue, uploads] = await Promise.all([
+  const priv = makePrivStore(config.bucket);
+  const [queue, uploads, inboxKeys] = await Promise.all([
     storage.loadJson<{ urls?: string[] }>("queue.json"),
     storage.list("bookuploads/"),
+    priv ? priv.list("inbox/").catch(() => [] as string[]) : Promise.resolve([] as string[]),
   ]);
-  const hasUrls = (queue?.urls ?? []).some((u) => /^https?:\/\//.test(u));
+  const hasUrls = (queue?.urls ?? []).some((u) => /^https?:\/\//.test(u)) || inboxKeys.length > 0;
 
   if (!hasUrls && uploads.length === 0) {
     console.log("[poll] nothing new");
