@@ -91,6 +91,11 @@ docs/             player (static PWA);  functions/  settings API (Pages Function
 - **Edge TTS returns empty audio?** Microsoft-side throttling; there's built-in 5-attempt quadratic backoff. Wrap long jobs in a retry loop (systemd unit) for extra safety
 - **Dialogue quality not to your taste?** Edit the prompts in `src/rewrite.ts`; set `newsStyle: "narration"` in `config.json` for single-voice readout
 - **Change voices?** `voice` / `dialogueVoices` in `config.json`; list voices with `edge-tts --list-voices`
+- **Is the TTS really free / allowed?** The Edge TTS endpoint is for **personal use only**. For anything commercial, implement the `TtsProvider` interface with Azure Speech (paid) or any other engine — it's one small class
+- **What about book copyright?** You convert books you own, for your own ears. The feed lives at an unguessable storage URL with no public domain attached — keep it that way; don't share or index it
+- **Really ~$0/month?** R2 free tier covers 10 GB and charges nothing for egress (the thing that matters for audio). LLM: any OpenAI-compatible endpoint — free tiers cover daily news easily; a whole book on a paid flash-class model costs cents
+- **What data leaves my infrastructure?** Article/book text goes to your configured LLM API and to the TTS endpoint. Storage, feed, and player are entirely yours
+- **Why AGPL?** So anyone running a hosted clone has to share their changes back
 
 ---
 
@@ -135,3 +140,8 @@ npm run pipeline          # 生成第一批资讯(config.json 改成你自己的
 - **Edge TTS 报 empty audio?** 微软端节流,内置 5 次二次方退避;长任务建议 systemd 单元包失败冷却重试
 - **对话质量不满意?** 改 `src/rewrite.ts` 的 prompt;`config.json` 的 `newsStyle` 改 `narration` 即单人直读
 - **换声音?** `config.json` 的 `voice` / `dialogueVoices`
+- **TTS 真的免费/合规吗?** Edge TTS 免费通道**仅限个人自用**;商用请实现 `TtsProvider` 接口换 Azure Speech(付费)等引擎,只是一个小类
+- **书的版权?** 转换你自己拥有的书、自己听。feed 挂在无公开域名的随机存储地址上——请保持私有,不要外发或公开索引
+- **真的每月 ~0 元?** R2 免费额度 10GB 且出口流量不计费(音频最烧的就是流量);LLM 用任何 OpenAI 兼容端点,免费档足够每日资讯,整本书用 flash 级付费模型也只要几毛钱
+- **哪些数据会离开我的设施?** 文章/书的文本会发给你配置的 LLM API 和 TTS 端点,其余(存储/feed/播放器)全在你自己手里
+- **为什么 AGPL?** 让任何托管克隆版都必须回馈修改
