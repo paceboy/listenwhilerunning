@@ -209,7 +209,7 @@
   <div class="card">
     <h2><span data-i18n="cardBook">上传电子书</span> <button class="qm" aria-label="?">?</button></h2>
     <div class="help" data-i18n="helpBook"></div>
-    <input type="file" id="bookFile" accept=".epub,.txt,.html,.htm,.pdf">
+    <input type="file" id="bookFile" accept=".epub,.txt,.html,.htm,.pdf,application/epub+zip,application/pdf,text/plain,text/html">
     <button class="resume" id="upBook" data-i18n="btnUpBook">上传</button>
     <div class="msg" id="bkMsg"></div>
   </div>
@@ -620,22 +620,42 @@ document.getElementById('saveCfg').onclick = function () {
     .catch(function (e) { msg(setMsg, t('saveFail') + e.message, true); });
 };
 var bkMsg = document.getElementById('bkMsg');
+// 手机端文件选择器(content:// / 微信、网盘另存的文件)常报不带扩展名的显示名,
+// 不能只认文件名后缀:依次回退 MIME 类型、文件头魔数(epub 是 zip 的 PK、PDF 是 %PDF)补出扩展名。
+function resolveBookName(f, cb) {
+  var name = (f.name || 'book').replace(/[/\\]/g, '_');
+  if (/\.(epub|txt|html?|pdf)$/i.test(name)) { cb(name); return; }
+  var byMime = {
+    'application/epub+zip': '.epub', 'application/pdf': '.pdf',
+    'text/plain': '.txt', 'text/html': '.html'
+  }[(f.type || '').split(';')[0].toLowerCase()];
+  if (byMime) { cb(name + byMime); return; }
+  f.slice(0, 8).arrayBuffer().then(function (buf) {
+    var head = String.fromCharCode.apply(null, new Uint8Array(buf));
+    if (head.indexOf('PK') === 0) cb(name + '.epub');
+    else if (head.indexOf('%PDF') === 0) cb(name + '.pdf');
+    else if ((f.type || '').indexOf('text/') === 0) cb(name + '.txt');
+    else cb(null);
+  }).catch(function () { cb(null); });
+}
 document.getElementById('upBook').onclick = function () {
   var f = document.getElementById('bookFile').files[0];
   if (!f) { msg(bkMsg, t('pickFile'), true); return; }
-  if (!/\.(epub|txt|html?|pdf)$/i.test(f.name)) { msg(bkMsg, t('badExt'), true); return; }
   if (f.size > 50 * 1024 * 1024) { msg(bkMsg, t('tooBig'), true); return; }
-  msg(bkMsg, tf('uploading', { kb: Math.round(f.size / 1024) }));
-  fetch('/api/book?name=' + encodeURIComponent(f.name), { method: 'PUT', headers: admHeaders(), body: f })
-    .then(function (r) {
-      if (!r.ok) throw new Error(r.status === 401 ? t('tokFirst') : r.status === 413 ? t('http413') : 'HTTP ' + r.status);
-      return r.json();
-    })
-    .then(function (d) {
-      msg(bkMsg, tf('uploaded', { n: d.uploaded }));
-      document.getElementById('bookFile').value = '';
-    })
-    .catch(function (e) { msg(bkMsg, t('upFail') + e.message, true); });
+  resolveBookName(f, function (name) {
+    if (!name) { msg(bkMsg, t('badExt'), true); return; }
+    msg(bkMsg, tf('uploading', { kb: Math.round(f.size / 1024) }));
+    fetch('/api/book?name=' + encodeURIComponent(name), { method: 'PUT', headers: admHeaders(), body: f })
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.status === 401 ? t('tokFirst') : r.status === 413 ? t('http413') : 'HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (d) {
+        msg(bkMsg, tf('uploaded', { n: d.uploaded }));
+        document.getElementById('bookFile').value = '';
+      })
+      .catch(function (e) { msg(bkMsg, t('upFail') + e.message, true); });
+  });
 };
 document.getElementById('sendUrl').onclick = function () {
   var url = document.getElementById('oneUrl').value.trim();
