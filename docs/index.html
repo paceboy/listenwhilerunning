@@ -188,6 +188,7 @@
     <h2><span data-i18n="cardTok">管理口令</span> <button class="qm" aria-label="?">?</button></h2>
     <div class="help" data-i18n="helpTok"></div>
     <input id="admTok" type="password" data-i18n-ph="phTok" placeholder="">
+    <div class="msg" id="tokMsg"></div>
   </div>
   <div class="card">
     <h2><span data-i18n="cardSrc">订阅源</span> <button class="qm" aria-label="?">?</button></h2>
@@ -233,6 +234,8 @@ var I18N = {
     cardTok: '管理口令',
     helpTok: '<b>相当于这个电台的管理密码</b>,防止陌生人改动你的订阅源。部署时 <b>npm run setup</b> 会自动生成并打印,同时写在服务器 <b>.env</b> 文件的 <b>LWR_ADMIN_TOKEN</b> 一行(自己部署的去那里找,别人帮忙部署的问 TA 要)。<br>忘了想重设:打开 <b>https://dash.cloudflare.com</b> → 左侧「<b>Workers 和 Pages</b>」→ 点你的播放器项目 → <b>设置</b> → <b>变量和机密</b> → 编辑 <b>ADMIN_TOKEN</b>,改完回这里填新值。<br>填一次就保存在本机浏览器里,不会传到别处。<b>只是听节目的话不需要填</b>;想改下面的订阅源或转文章才需要。',
     phTok: '部署时设置的 ADMIN_TOKEN,只存在本机',
+    tokOn: '✓ 已登录(口令保存在本设备浏览器)',
+    tokOff: '未登录:改订阅源 / 转文章 / 上传电子书 / 进度同步都需要口令。口令按设备各自保存,换了手机要重新填一次——最省事是在这台设备打开部署时打印的一键登录链接(形如 播放器地址/#tok=…)。',
     cardSrc: '订阅源',
     helpSrc: '每天早上,系统会从这里列出的 <b>RSS 源</b>抓取最新文章,改写成两人对话音频。左边填给自己看的名字,右边填 RSS 地址。<br>例:名字「<b>少数派</b>」,地址 <b>https://sspai.com/feed</b>。<br>不知道某网站的 RSS 地址?搜「网站名 + RSS」,或用 rsshub.app 生成。改完点保存,<b>明早批次生效</b>。(需要先填上面的管理口令)',
     btnAddSrc: '+ 加一个源', btnSave: '保存(明早批次生效)',
@@ -260,6 +263,7 @@ var I18N = {
     noBase: '未配置存储地址',
     noCfgJs: 'config.js 缺失:在项目里运行 npm run setup 自动生成并重新部署',
     untitled: '(无标题)', unknownSrc: '未知来源', groupOther: '其他',
+    sortGroup: '排序:按板块', sortTime: '排序:按时间',
     epCount: '共 {n} 集,播完自动连播', feedEmpty: 'feed 里还没有内容', feedFail: '加载 feed 失败:',
     btnDoc: '文稿', noDoc: '这一集还没有文稿(旧集或生成时未保存)',
     noBooks: '还没有书。',
@@ -280,6 +284,8 @@ var I18N = {
     cardTok: 'Admin token',
     helpTok: '<b>The admin password of your station</b> — it stops strangers from changing your feeds. <b>npm run setup</b> generates and prints it at deploy time, and writes it to the <b>LWR_ADMIN_TOKEN</b> line of the server’s <b>.env</b> file (check there if you deployed it yourself; otherwise ask whoever deployed it for you).<br>Forgot it? Open <b>https://dash.cloudflare.com</b> → <b>Workers &amp; Pages</b> → your player project → <b>Settings</b> → <b>Variables and Secrets</b> → edit <b>ADMIN_TOKEN</b>, then paste the new value here.<br>It is stored only in this browser. <b>You don’t need it just to listen</b> — only to edit feeds or convert content below.',
     phTok: 'ADMIN_TOKEN set at deploy time; stored only on this device',
+    tokOn: '✓ Signed in (token stored in this device’s browser)',
+    tokOff: 'Not signed in: editing feeds / converting articles / uploading ebooks / progress sync all need the token. It is stored per device — on a new phone, paste it again, or open the one-tap login link printed at deploy time (player-URL/#tok=…).',
     cardSrc: 'Feeds',
     helpSrc: 'Every morning the system fetches new articles from the <b>RSS feeds</b> listed here and rewrites them into two-host dialogue audio. Left: any name for yourself; right: the RSS URL.<br>Example: name "<b>Hacker News</b>", URL <b>https://hnrss.org/frontpage</b>.<br>Can’t find a site’s RSS? Search "site name + RSS" or generate one with rsshub.app. Save — <b>takes effect in tomorrow morning’s batch</b>. (Requires the admin token above.)',
     btnAddSrc: '+ Add a feed', btnSave: 'Save (effective tomorrow morning)',
@@ -307,6 +313,7 @@ var I18N = {
     noBase: 'Storage URL not configured',
     noCfgJs: 'config.js missing: run npm run setup in the project to generate it, then redeploy',
     untitled: '(untitled)', unknownSrc: 'unknown source', groupOther: 'Other',
+    sortGroup: 'Sort: by topic', sortTime: 'Sort: by time',
     epCount: '{n} episodes; plays on to the next automatically', feedEmpty: 'No episodes in the feed yet', feedFail: 'Failed to load feed: ',
     btnDoc: 'Text', noDoc: 'No transcript for this episode (generated before transcripts existed)',
     noBooks: 'No books yet.',
@@ -524,7 +531,9 @@ if (mTok) {
   history.replaceState(null, '', location.pathname + location.search);
 }
 admTok.value = localStorage.getItem('admtok') || '';
-admTok.onchange = function () { localStorage.setItem('admtok', this.value.trim()); settingsLoaded = false; loadSettings(); pullProgress(); };
+var tokMsg = document.getElementById('tokMsg');
+function updateTokState() { msg(tokMsg, localStorage.getItem('admtok') ? t('tokOn') : t('tokOff'), !localStorage.getItem('admtok')); }
+admTok.onchange = function () { localStorage.setItem('admtok', this.value.trim()); updateTokState(); settingsLoaded = false; loadSettings(); pullProgress(); };
 function admHeaders(json) {
   var h = { 'x-admin-token': localStorage.getItem('admtok') || '' };
   if (json) h['content-type'] = 'application/json';
@@ -686,7 +695,7 @@ function applyLang() {
   [].forEach.call(srcList.querySelectorAll('.su'), function (el) { el.placeholder = t('phSrcUrl'); });
   document.getElementById('langBtn').textContent = L === 'zh' ? 'EN' : '中文';
   if (!a.src) nowEl.textContent = t('npEmpty');
-  updateRateBtn(); updateSleepBtn();
+  updateRateBtn(); updateSleepBtn(); updateTokState();
 }
 function restorePlaying() {
   if (!a.src) return;
@@ -727,38 +736,62 @@ function toggleDoc(li, audioUrl) {
 }
 
 // ---- 资讯:读 feed.xml ----
+var newsSort = localStorage.getItem('lwr-newsort') || 'group';
 function renderNews() {
   if (feedTitle) { document.title = feedTitle; document.getElementById('title').textContent = feedTitle; }
-  var groups = [];
-  feedEntries.forEach(function (e) {
-    var g = e.group || t('groupOther');
-    if (groups.indexOf(g) < 0) groups.push(g);
-  });
-  groups.forEach(function (g) {
-    var mine = feedEntries.filter(function (e) { return (e.group || t('groupOther')) === g; });
-    if (groups.length > 1) {
-      var h = document.createElement('li');
-      h.className = 'ghead';
-      h.textContent = '— ' + g + ' —';
-      listEl.appendChild(h);
-    }
-    mine.forEach(function (e) {
-      var li = document.createElement('li');
-      li.innerHTML = '<span class="t"></span><span class="m"><span class="src"></span><span class="mm"></span></span>';
-      li.querySelector('.t').textContent = e.title || t('untitled');
-      li.querySelector('.src').textContent = e.src || t('unknownSrc');
-      li.querySelector('.mm').textContent = (e.pub ? fmtBeijing(e.pub) : '') + ' · ' + tf('minLong', { n: mins(e.bytes) });
-      var item = { title: e.title, url: e.url, li: li };
-      var doc = document.createElement('span');
-      doc.className = 'doc';
-      doc.textContent = t('btnDoc');
-      doc.onclick = (function (u) { return function (ev) { ev.stopPropagation(); toggleDoc(li, u); }; })(e.url);
-      li.querySelector('.m').appendChild(doc);
-      li.onclick = (function (idx) { return function () { play(newsItems, idx); }; })(newsItems.length);
-      listEl.appendChild(li);
-      newsItems.push(item);
+  function addEntry(e) {
+    var li = document.createElement('li');
+    li.innerHTML = '<span class="t"></span><span class="m"><span class="src"></span><span class="mm"></span></span>';
+    li.querySelector('.t').textContent = e.title || t('untitled');
+    li.querySelector('.src').textContent = e.src || t('unknownSrc');
+    li.querySelector('.mm').textContent = (e.pub ? fmtBeijing(e.pub) : '') + ' · ' + tf('minLong', { n: mins(e.bytes) });
+    var item = { title: e.title, url: e.url, li: li };
+    var doc = document.createElement('span');
+    doc.className = 'doc';
+    doc.textContent = t('btnDoc');
+    doc.onclick = (function (u) { return function (ev) { ev.stopPropagation(); toggleDoc(li, u); }; })(e.url);
+    li.querySelector('.m').appendChild(doc);
+    li.onclick = (function (idx) { return function () { play(newsItems, idx); }; })(newsItems.length);
+    listEl.appendChild(li);
+    newsItems.push(item);
+  }
+  // 排序切换:按板块(feed 原分组)/ 按时间(全部平铺倒序);连播顺序 = 显示顺序
+  if (feedEntries.length > 1) {
+    var sb = document.createElement('li');
+    sb.className = 'ghead';
+    sb.style.textAlign = 'right';
+    var btn = document.createElement('button');
+    btn.className = 'pill';
+    btn.textContent = t(newsSort === 'time' ? 'sortTime' : 'sortGroup');
+    btn.onclick = function () {
+      newsSort = newsSort === 'time' ? 'group' : 'time';
+      localStorage.setItem('lwr-newsort', newsSort);
+      listEl.innerHTML = ''; newsItems = []; renderNews(); restorePlaying();
+    };
+    sb.appendChild(btn);
+    listEl.appendChild(sb);
+  }
+  if (newsSort === 'time') {
+    feedEntries.slice().sort(function (x, y) {
+      return (Date.parse(y.pub) || 0) - (Date.parse(x.pub) || 0);
+    }).forEach(addEntry);
+  } else {
+    var groups = [];
+    feedEntries.forEach(function (e) {
+      var g = e.group || t('groupOther');
+      if (groups.indexOf(g) < 0) groups.push(g);
     });
-  });
+    groups.forEach(function (g) {
+      var mine = feedEntries.filter(function (e) { return (e.group || t('groupOther')) === g; });
+      if (groups.length > 1) {
+        var h = document.createElement('li');
+        h.className = 'ghead';
+        h.textContent = '— ' + g + ' —';
+        listEl.appendChild(h);
+      }
+      mine.forEach(addEntry);
+    });
+  }
   if (!a.src) setStatus(newsItems.length ? tf('epCount', { n: newsItems.length }) : t('feedEmpty'));
 }
 if (!BASE) {

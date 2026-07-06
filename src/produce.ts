@@ -112,9 +112,12 @@ export async function publishFeed(
 ): Promise<string> {
   const allEpisodes = [...newEpisodes, ...state.episodes];
   state.episodes = allEpisodes.slice(0, config.feedEpisodeCount);
-  // 被挤出 feed 的旧集连同音频一起清掉,防止 bucket 无限膨胀
+  // 被挤出 feed 的旧集连同音频、逐字稿一起清掉,防止 bucket 无限膨胀
   for (const dropped of allEpisodes.slice(config.feedEpisodeCount)) {
     await storage.delete(dropped.audioPath);
+    await storage
+      .delete(dropped.audioPath.replace(/^episodes\//, "transcripts/").replace(/\.mp3$/, ".txt"))
+      .catch(() => {});
     console.log(`[pipeline] pruned old episode: ${dropped.title}`);
   }
   await storage.saveState(state);
