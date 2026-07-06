@@ -11,7 +11,7 @@ Turn **your own RSS feeds and ebooks** into a personal podcast you can binge on 
 </p>
 
 - 📰 **News → two-host dialogue podcast**: RSS / subreddits / any article URL → LLM rewrites into a natural conversation → neural TTS → new episodes appear in your podcast app every morning
-- 📚 **Ebooks → audiobooks**: upload an epub/pdf/txt/html (even from your phone), get a serialized audiobook plus an AI-generated "hosts discuss this book" intro episode; generation runs ~10x faster than playback, so you can start listening within minutes
+- 📚 **Ebooks → audiobooks**: upload an epub/mobi/azw3/pdf/txt/html/fb2/docx (even from your phone), get a serialized audiobook plus an AI-generated "hosts discuss this book" intro episode; generation runs ~10x faster than playback, so you can start listening within minutes
 - 📡 **Standard podcast RSS**: Apple Podcasts, Pocket Casts, Overcast — anything with "follow by URL" just works
 - 🏃 **Runner-friendly PWA player**: lock-screen controls, ±15s skip, speed, sleep timer, offline caching, resume everywhere
 - 🧱 **Zero backend**: batch pipeline + object storage + static page, all within free tiers (Cloudflare R2 10GB with free egress, GitHub Actions, Cloudflare Pages)
@@ -42,10 +42,10 @@ npm run pipeline          # generate your first batch (edit config.json sources 
 
 ### Audiobooks
 
-Upload an **epub/pdf/txt/html directly from the player's settings page** (listening starts minutes later, while the rest generates), or on the server:
+Upload an **epub/mobi/azw3/pdf/txt/html/fb2/docx directly from the player's settings page** (listening starts minutes later, while the rest generates), or on the server:
 
 ```bash
-cp somebook.epub books/   # epub/pdf/html converts automatically; mobi → epub via Calibre first
+cp somebook.epub books/   # mobi/azw3/fb2/docx need Calibre installed (sudo apt install calibre); GHA installs it automatically when needed
 npm run books:sync        # generates the whole book (interruptible, resumes); delete the file + rerun to free space
 npm run books:translate -- SomeEnglishBook   # listen to an English book as a Chinese audiobook
 ```
@@ -105,7 +105,7 @@ docs/             player (static PWA);  functions/  settings API (Pages Function
 **跑步听什么**:把你自己订阅的信息源和电子书,每天自动变成能在跑步/通勤时连续收听的私人电台。
 
 - 📰 资讯 → 双主播对谈播客:RSS/Reddit/任意文章链接 → LLM 改写 → TTS 合成,每早自动出现在播客 App
-- 📚 电子书 → 有声书:epub/pdf/txt/html 手机上传即转,整本连载 + 一集对话导读;生成比播放快约 10 倍,几分钟后即可边生成边听;英文书可整本翻译成中文再听
+- 📚 电子书 → 有声书:epub/mobi/azw3/pdf/txt/html/fb2/docx 手机上传即转,整本连载 + 一集对话导读;生成比播放快约 10 倍,几分钟后即可边生成边听;英文书可整本翻译成中文再听
 - 📡 标准播客 RSS:Apple Podcasts 等任何 App"通过 URL 关注"直接订阅
 - 🏃 跑步场景播放器(PWA):锁屏控制、±15s、倍速、睡眠定时、离线缓存、断点记忆
 - 🧱 零后台:批处理管线 + 对象存储 + 静态页,全部免费额度(R2 10GB、出口流量免费)
@@ -134,7 +134,7 @@ npm run pipeline          # 生成第一批资讯(config.json 改成你自己的
 
 ### 听书 / 单篇转换
 
-播放器**设置页直接上传** epub/pdf/txt/html(扫描版 PDF 需先 OCR);或服务器上 `cp 书.epub books/ && npm run books:sync`(可中断续传,删文件重跑即释放空间);英文书 `npm run books:translate -- 书名` 整本翻成中文。单篇文章:设置页贴链接,或 `npm run add -- <url>`。
+播放器**设置页直接上传** epub/mobi/azw3/pdf/txt/html/fb2/docx(扫描版 PDF 需先 OCR;Kindle/fb2/docx 格式经 Calibre 转换——自己机器需 `sudo apt install calibre`,GHA 会按需自动装);或服务器上 `cp 书.epub books/ && npm run books:sync`(可中断续传,删文件重跑即释放空间);英文书 `npm run books:translate -- 书名` 整本翻成中文。单篇文章:设置页贴链接,或 `npm run add -- <url>`。
 
 ### 常见问题
 

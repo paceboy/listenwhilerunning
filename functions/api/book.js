@@ -1,7 +1,7 @@
 // 电子书上传:PUT ?name=<文件名> 把 .epub/.txt/.html/.pdf 存进 bucket 的 bookuploads/,
 // 服务器下次批次(每日管线或 npm run books:sync)自动导入 books/ 并生成音频。
 // GET 返回待转换列表,播放器设置页用来显示"已上传待处理"。
-const EXT_RE = /\.(epub|txt|html?|pdf)$/i;
+const EXT_RE = /\.(epub|txt|html?|pdf|mobi|azw3?|fb2|docx)$/i;
 const MAX_BYTES = 50 * 1024 * 1024;
 
 export async function onRequest({ request, env }) {
@@ -19,7 +19,7 @@ export async function onRequest({ request, env }) {
 
   const name = new URL(request.url).searchParams.get("name") || "";
   if (!EXT_RE.test(name) || name.includes("/") || name.includes("\\") || name.startsWith(".")) {
-    return new Response("bad filename (need .epub/.txt/.html/.pdf)", { status: 400 });
+    return new Response("bad filename (need .epub/.mobi/.azw3/.txt/.html/.pdf/.fb2/.docx)", { status: 400 });
   }
   const declared = Number(request.headers.get("content-length") || 0);
   if (declared > MAX_BYTES) return new Response("file too large (max 50MB)", { status: 413 });

@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
@@ -8,6 +8,7 @@ import { chunkBook } from "./books.js";
 import { epubToText } from "./epub.js";
 import { htmlToText } from "./html.js";
 import { pdfToText } from "./pdf.js";
+import { convertToEpub } from "./convert.js";
 import { bookIntroScript, summarizeText } from "./rewrite.js";
 import { DialogueTts, EdgeTts, parseDialogue } from "./tts.js";
 import { makeStore, loadConfig } from "./store.js";
@@ -68,7 +69,7 @@ export async function importBookUploads(
   const imported: { file: string; key: string }[] = [];
   for (const key of keys) {
     const rawName = basename(key.slice(UPLOADS_PREFIX.length));
-    if (!/\.(epub|txt|html?|pdf)$/i.test(rawName) || rawName.startsWith(".")) {
+    if (!/\.(epub|txt|html?|pdf|mobi|azw3?|fb2|docx)$/i.test(rawName) || rawName.startsWith(".")) {
       console.warn(`[books] upload ignored (bad name): ${key}`);
       continue;
     }
@@ -243,19 +244,27 @@ export async function syncBooksAll() {
   const uploadKeyByBook = new Map(uploads.map((u) => [u.file.replace(/\.[^.]+$/, ""), u.key]));
   const manifest = (await storage.loadJson<BookManifest>(MANIFEST_PATH)) ?? { books: [] };
 
-  // epub/html/pdf 先转 txt(已有同名 txt 的跳过)
+  // epub/html/pdf/mobi 等先转 txt(已有同名 txt 的跳过;Kindle/fb2/docx 经 Calibre 转 epub 再提取)
   if (existsSync(config.booksDir)) {
-    for (const f of readdirSync(config.booksDir).filter((x) => /\.(epub|html?|pdf)$/i.test(x))) {
+    for (const f of readdirSync(config.booksDir).filter((x) => /\.(epub|html?|pdf|mobi|azw3?|fb2|docx)$/i.test(x))) {
       const rawExt = f.slice(f.lastIndexOf("."));
       const ext = rawExt.toLowerCase();
       const txtPath = join(config.booksDir, `${basename(f, rawExt)}.txt`);
       if (existsSync(txtPath)) continue;
       try {
         const src = join(config.booksDir, f);
-        const text =
-          ext === ".epub" ? epubToText(src)
-          : ext === ".pdf" ? await pdfToText(src)
-          : htmlToText(readFileSync(src, "utf8"));
+        let text: string;
+        if (ext === ".epub") text = epubToText(src);
+        else if (ext === ".pdf") text = await pdfToText(src);
+        else if (ext === ".html" || ext === ".htm") text = htmlToText(readFileSync(src, "utf8"));
+        else {
+          const tmp = convertToEpub(src);
+          try {
+            text = epubToText(tmp);
+          } finally {
+            rmSync(tmp, { force: true });
+          }
+        }
         writeFileSync(txtPath, text);
         console.log(`[books] ${f} → ${basename(txtPath)} (${text.length} chars)`);
       } catch (e) {

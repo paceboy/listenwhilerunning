@@ -209,7 +209,7 @@
   <div class="card">
     <h2><span data-i18n="cardBook">上传电子书</span> <button class="qm" aria-label="?">?</button></h2>
     <div class="help" data-i18n="helpBook"></div>
-    <input type="file" id="bookFile" accept=".epub,.txt,.html,.htm,.pdf,application/epub+zip,application/pdf,text/plain,text/html">
+    <input type="file" id="bookFile" accept=".epub,.txt,.html,.htm,.pdf,.mobi,.azw,.azw3,.fb2,.docx,application/epub+zip,application/pdf,text/plain,text/html,application/x-mobipocket-ebook,application/vnd.amazon.ebook">
     <button class="resume" id="upBook" data-i18n="btnUpBook">上传</button>
     <div class="msg" id="bkMsg"></div>
   </div>
@@ -241,7 +241,7 @@ var I18N = {
     helpUrl: '看到一篇好文章,想用耳朵听?把<b>文章链接</b>贴进来,<b>几分钟内</b>就会转成一集音频,出现在「资讯」列表里,<b>不占每天的名额</b>。<br>例:<b>https://mp.weixin.qq.com/s/xxxx</b> 或任意博客/新闻页链接。(需要先填上面的管理口令)',
     phUrl: 'https:// 文章链接', btnSendUrl: '转成一集(几分钟内生成)',
     cardBook: '上传电子书',
-    helpBook: '把自己的电子书变成<b>有声书连载</b>:选一个 <b>.epub / .pdf / .txt / .html</b> 文件(50MB 以内)上传,<b>几分钟后</b>自动开始转音频,出现在「书籍」标签页。生成比播放快十倍左右,<b>从第 1 集听起就能边生成边听</b>,还会配一集两位主播的导读。英文书自动用英文声音朗读;想听中文可在服务器上跑 <b>npm run books:translate</b> 先整本翻译。删除书籍在服务器上执行 <b>npm run books:remove</b>。(需要先填上面的管理口令)',
+    helpBook: '把自己的电子书变成<b>有声书连载</b>:选一个 <b>.epub / .mobi / .azw3 / .pdf / .txt</b> 等文件(50MB 以内)上传,<b>几分钟后</b>自动开始转音频,出现在「书籍」标签页。生成比播放快十倍左右,<b>从第 1 集听起就能边生成边听</b>,还会配一集两位主播的导读。英文书自动用英文声音朗读;想听中文可在服务器上跑 <b>npm run books:translate</b> 先整本翻译。删除书籍在服务器上执行 <b>npm run books:remove</b>。(需要先填上面的管理口令)',
     btnUpBook: '上传(几分钟后可边生成边听)',
     playFail: '播放失败:', audioErr: '音频错误:',
     err1: '加载被中止', err2: '网络错误(设备连不上音频服务器)', err3: '解码失败', err4: '格式不支持或地址不可达', errX: '未知',
@@ -251,7 +251,7 @@ var I18N = {
     readFail: '读取失败:', copied: '已复制',
     notLoaded: '配置未加载,不能保存', needOneSrc: '至少留一个有效源',
     savedN: '已保存 {n} 个源,明早批次生效', saveFail: '保存失败:',
-    pickFile: '先选择文件', badExt: '只支持 .epub / .txt / .html / .pdf', tooBig: '文件超过 50MB',
+    pickFile: '先选择文件', badExt: '只支持 .epub / .mobi / .azw3 / .pdf / .txt / .html / .fb2 / .docx', tooBig: '文件超过 50MB',
     uploading: '上传中({kb} KB)…', tokFirst: '先在上面填管理口令', http413: '文件太大',
     uploaded: '已上传「{n}」,几分钟后开始生成,集数会陆续出现在书籍页,从第 1 集就能边生成边听',
     upFail: '上传失败:', badUrl: '不是合法链接',
@@ -288,7 +288,7 @@ var I18N = {
     helpUrl: 'Found a good read and want to listen instead? Paste the <b>article URL</b> — it becomes an audio episode <b>within minutes</b> in the News tab, <b>without using the daily quota</b>.<br>Example: any blog or news page URL. (Requires the admin token above.)',
     phUrl: 'https:// article URL', btnSendUrl: 'Convert to an episode (ready in minutes)',
     cardBook: 'Upload an ebook',
-    helpBook: 'Turn your own ebook into a <b>serialized audiobook</b>: upload one <b>.epub / .pdf / .txt / .html</b> file (up to 50MB); conversion starts automatically <b>within minutes</b> and episodes appear in the Books tab. Generation runs ~10x faster than playback, so <b>you can start listening from part 1 while the rest converts</b> — plus an AI "two hosts discuss this book" intro episode. English books are narrated with English voices automatically. To delete a book run <b>npm run books:remove</b> on the server. (Requires the admin token above.)',
+    helpBook: 'Turn your own ebook into a <b>serialized audiobook</b>: upload one <b>.epub / .mobi / .azw3 / .pdf / .txt</b> (etc.) file (up to 50MB); conversion starts automatically <b>within minutes</b> and episodes appear in the Books tab. Generation runs ~10x faster than playback, so <b>you can start listening from part 1 while the rest converts</b> — plus an AI "two hosts discuss this book" intro episode. English books are narrated with English voices automatically. To delete a book run <b>npm run books:remove</b> on the server. (Requires the admin token above.)',
     btnUpBook: 'Upload (listen while it converts)',
     playFail: 'Playback failed: ', audioErr: 'Audio error: ',
     err1: 'loading aborted', err2: 'network error (cannot reach the audio server)', err3: 'decode failed', err4: 'unsupported format or unreachable URL', errX: 'unknown',
@@ -298,7 +298,7 @@ var I18N = {
     readFail: 'Load failed: ', copied: 'Copied',
     notLoaded: 'Config not loaded; cannot save', needOneSrc: 'Keep at least one valid feed',
     savedN: 'Saved {n} feeds; effective tomorrow morning', saveFail: 'Save failed: ',
-    pickFile: 'Choose a file first', badExt: 'Only .epub / .txt / .html / .pdf are supported', tooBig: 'File exceeds 50MB',
+    pickFile: 'Choose a file first', badExt: 'Only .epub / .mobi / .azw3 / .pdf / .txt / .html / .fb2 / .docx are supported', tooBig: 'File exceeds 50MB',
     uploading: 'Uploading ({kb} KB)…', tokFirst: 'enter the admin token above first', http413: 'file too large',
     uploaded: 'Uploaded "{n}". Conversion starts within minutes; episodes will appear in Books — start listening from part 1 right away',
     upFail: 'Upload failed: ', badUrl: 'Not a valid URL',
@@ -624,26 +624,37 @@ var bkMsg = document.getElementById('bkMsg');
 // 不能只认文件名后缀:依次回退 MIME 类型、文件头魔数(epub 是 zip 的 PK、PDF 是 %PDF)补出扩展名。
 function resolveBookName(f, cb) {
   var name = (f.name || 'book').replace(/[/\\]/g, '_');
-  if (/\.(epub|txt|html?|pdf)$/i.test(name)) { cb(name); return; }
+  if (/\.(epub|txt|html?|pdf|mobi|azw3?|fb2|docx)$/i.test(name)) { cb(name); return; }
   var byMime = {
     'application/epub+zip': '.epub', 'application/pdf': '.pdf',
-    'text/plain': '.txt', 'text/html': '.html'
+    'text/plain': '.txt', 'text/html': '.html',
+    'application/x-mobipocket-ebook': '.mobi', 'application/vnd.amazon.ebook': '.azw3',
+    'application/x-fictionbook+xml': '.fb2',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx'
   }[(f.type || '').split(';')[0].toLowerCase()];
   if (byMime) { cb(name + byMime); return; }
-  f.slice(0, 8).arrayBuffer().then(function (buf) {
-    var head = String.fromCharCode.apply(null, new Uint8Array(buf));
-    if (head.indexOf('PK') === 0) cb(name + '.epub');
-    else if (head.indexOf('%PDF') === 0) cb(name + '.pdf');
-    else if ((f.type || '').indexOf('text/') === 0) cb(name + '.txt');
-    else cb(null);
-  }).catch(function () { cb(null); });
+  // FileReader 而非 Blob.arrayBuffer():微信内置浏览器/老 WebView 不支持后者
+  try {
+    var rd = new FileReader();
+    rd.onload = function () {
+      var head = String.fromCharCode.apply(null, new Uint8Array(rd.result));
+      if (head.slice(60, 68) === 'BOOKMOBI') cb(name + '.mobi');
+      else if (head.indexOf('PK') === 0) cb(name + '.epub');
+      else if (head.indexOf('%PDF') === 0) cb(name + '.pdf');
+      else if ((f.type || '').indexOf('text/') === 0) cb(name + '.txt');
+      else cb(null);
+    };
+    rd.onerror = function () { cb(null); };
+    rd.readAsArrayBuffer(f.slice(0, 68));
+  } catch (e) { cb(null); }
 }
 document.getElementById('upBook').onclick = function () {
   var f = document.getElementById('bookFile').files[0];
   if (!f) { msg(bkMsg, t('pickFile'), true); return; }
   if (f.size > 50 * 1024 * 1024) { msg(bkMsg, t('tooBig'), true); return; }
   resolveBookName(f, function (name) {
-    if (!name) { msg(bkMsg, t('badExt'), true); return; }
+    // 括号里带上选择器实际报的文件名/类型:手机端各种选择器行为不一,报错自带诊断
+    if (!name) { msg(bkMsg, t('badExt') + ' [' + (f.name || '?') + ' · ' + (f.type || '?') + ']', true); return; }
     msg(bkMsg, tf('uploading', { kb: Math.round(f.size / 1024) }));
     fetch('/api/book?name=' + encodeURIComponent(name), { method: 'PUT', headers: admHeaders(), body: f })
       .then(function (r) {
