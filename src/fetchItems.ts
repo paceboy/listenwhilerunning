@@ -38,8 +38,14 @@ async function fetchFeed(url: string) {
 
 export async function fetchArticles(sources: SourceConfig[]): Promise<Article[]> {
   const all: Article[] = [];
+  let redditFetched = false;
   for (const src of sources) {
     try {
+      // Reddit 同 IP 无认证限速很紧,源一多背靠背必 429;主动隔 10s 比撞上后退避 30s 省
+      if (/reddit\.com/i.test(src.url)) {
+        if (redditFetched) await new Promise((r) => setTimeout(r, 10_000));
+        redditFetched = true;
+      }
       const feed = await fetchFeed(src.url);
       const filter = src.filter ? new RegExp(src.filter, "i") : null;
       for (const item of feed.items ?? []) {
