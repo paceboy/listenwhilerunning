@@ -13,7 +13,11 @@ import type { AppConfig, Article, Episode } from "./types.js";
 
 const SEEN_CAP = 2000;
 
-/** 按源轮询选取(每源内按时间降序),避免高产源(36氪等)垄断每日配额 */
+/**
+ * 按源轮询选取(每源内按时间降序),避免高产源(36氪等)垄断每日配额。
+ * 源顺序每轮随机打乱:源数超过配额时,若按最新文章时间排序,周更 newsletter
+ * 永远排在每日更新源之后、一集也轮不到;随机化让低频源隔天也有机会被选中。
+ */
 function pickRoundRobin<T extends { sourceName: string }>(articles: T[], limit: number): T[] {
   const bySource = new Map<string, T[]>();
   for (const a of articles) {
@@ -21,10 +25,15 @@ function pickRoundRobin<T extends { sourceName: string }>(articles: T[], limit: 
     list.push(a);
     bySource.set(a.sourceName, list);
   }
+  const lists = [...bySource.values()];
+  for (let i = lists.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [lists[i], lists[j]] = [lists[j], lists[i]];
+  }
   const picked: T[] = [];
   while (picked.length < limit) {
     let took = false;
-    for (const list of bySource.values()) {
+    for (const list of lists) {
       const a = list.shift();
       if (!a) continue;
       picked.push(a);
