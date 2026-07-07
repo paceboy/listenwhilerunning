@@ -114,6 +114,9 @@
   .parts li.playing .ps, .parts li.playing .pn { color: var(--acc); }
   .empty { color: var(--dim); font-size: .85em; padding: 20px 4px; text-align: center; }
   .ghead { padding: 14px 4px 4px; font-size: .8em; color: var(--acc); letter-spacing: .1em; border: 0; cursor: default; background: none; }
+  /* 资讯板块卡片:复用书籍 details.book 外观,内层每集仍是普通卡片 */
+  #list li.gcard, #list li.gcard:active { padding: 0; background: none; border: 0; cursor: default; }
+  .newsg .glist { padding: 0 10px 12px; }
   .doc { margin-left: auto; color: var(--dim); border: 1px solid var(--line); padding: 1px 8px; border-radius: 999px; cursor: pointer; flex: none; }
   li.playing .doc, .doc:active { color: var(--acc); border-color: var(--acc); }
   .script { margin-top: 10px; padding: 10px 12px; background: var(--card2); border-radius: 10px; font-size: .82em; line-height: 1.7; color: var(--dim); white-space: pre-wrap; max-height: 40vh; overflow-y: auto; cursor: auto; }
@@ -737,9 +740,12 @@ function toggleDoc(li, audioUrl) {
 
 // ---- 资讯:读 feed.xml ----
 var newsSort = localStorage.getItem('lwr-newsort') || 'group';
+// 折叠的板块名集合,持久化;折叠只影响显示,连播顺序不变
+var newsFold = {};
+try { JSON.parse(localStorage.getItem('lwr-newsfold') || '[]').forEach(function (g) { newsFold[g] = 1; }); } catch (e) {}
 function renderNews() {
   if (feedTitle) { document.title = feedTitle; document.getElementById('title').textContent = feedTitle; }
-  function addEntry(e) {
+  function addEntry(e, container) {
     var li = document.createElement('li');
     li.innerHTML = '<span class="t"></span><span class="m"><span class="src"></span><span class="mm"></span></span>';
     li.querySelector('.t').textContent = e.title || t('untitled');
@@ -752,7 +758,7 @@ function renderNews() {
     doc.onclick = (function (u) { return function (ev) { ev.stopPropagation(); toggleDoc(li, u); }; })(e.url);
     li.querySelector('.m').appendChild(doc);
     li.onclick = (function (idx) { return function () { play(newsItems, idx); }; })(newsItems.length);
-    listEl.appendChild(li);
+    (container || listEl).appendChild(li);
     newsItems.push(item);
   }
   // 排序切换:按板块(feed 原分组)/ 按时间(全部平铺倒序);连播顺序 = 显示顺序
@@ -774,7 +780,7 @@ function renderNews() {
   if (newsSort === 'time') {
     feedEntries.slice().sort(function (x, y) {
       return (Date.parse(y.pub) || 0) - (Date.parse(x.pub) || 0);
-    }).forEach(addEntry);
+    }).forEach(function (e) { addEntry(e); });
   } else {
     var groups = [];
     feedEntries.forEach(function (e) {
@@ -783,13 +789,30 @@ function renderNews() {
     });
     groups.forEach(function (g) {
       var mine = feedEntries.filter(function (e) { return (e.group || t('groupOther')) === g; });
-      if (groups.length > 1) {
-        var h = document.createElement('li');
-        h.className = 'ghead';
-        h.textContent = '— ' + g + ' —';
-        listEl.appendChild(h);
-      }
-      mine.forEach(addEntry);
+      if (groups.length === 1) { mine.forEach(function (e) { addEntry(e); }); return; }
+      // 板块 = 书籍同款可折叠卡片(details/summary),折叠状态持久化
+      var wrap = document.createElement('li');
+      wrap.className = 'gcard';
+      var dt = document.createElement('details');
+      dt.className = 'book newsg';
+      dt.open = !newsFold[g];
+      var head = document.createElement('summary');
+      head.innerHTML = '<h2></h2><div class="prog"></div>';
+      head.querySelector('h2').textContent = g;
+      head.querySelector('.prog').textContent = tf('epCount', { n: mine.length });
+      dt.appendChild(head);
+      var gul = document.createElement('ul');
+      gul.className = 'glist';
+      mine.forEach(function (e) { addEntry(e, gul); });
+      dt.appendChild(gul);
+      dt.ontoggle = function () {
+        var closed = !dt.open;
+        if (closed === !!newsFold[g]) return;
+        if (closed) newsFold[g] = 1; else delete newsFold[g];
+        localStorage.setItem('lwr-newsfold', JSON.stringify(Object.keys(newsFold)));
+      };
+      wrap.appendChild(dt);
+      listEl.appendChild(wrap);
     });
   }
   if (!a.src) setStatus(newsItems.length ? tf('epCount', { n: newsItems.length }) : t('feedEmpty'));
