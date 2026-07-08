@@ -1,6 +1,7 @@
 import type { RewriteConfig } from "./rewrite.js";
-import { rewriteToScript } from "./rewrite.js";
+import { rewriteToScript, translateLinesEn } from "./rewrite.js";
 import { DialogueTts, EdgeTts, parseDialogue } from "./tts.js";
+import type { DialogueLine } from "./tts.js";
 import type { ObjectStore } from "./storage.js";
 import { buildFeedXml } from "./feed.js";
 import { existsSync, readFileSync } from "node:fs";
@@ -54,14 +55,15 @@ export class EpisodeProducer {
     }
     const audioPath = `episodes/${article.guid}.mp3`;
     await this.storage.uploadAudio(audioPath, audio);
-    // 逐字稿:播放器"文稿"按钮按需读取;失败只警告,不影响出集
-    try {
-      const doc = dialogue
-        ? dialogue.map((l) => (l.speaker === 0 ? "A: " : "B: ") + l.text).join("\n\n")
-        : script;
-      await this.storage.uploadFile(`transcripts/${article.guid}.txt`, Buffer.from(doc), "text/plain; charset=utf-8");
-    } catch (e) {
-      console.warn(`[produce] transcript upload failed: ${(e as Error).message}`);
+    // 逐字稿:播放器"文稿"按钮/字幕按需读取;失败只警告,不影响出集
+    if (dialogue) {
+      await uploadTranscripts(this.storage, article.guid, dialogue, this.rewriteCfg);
+    } else {
+      try {
+        await this.storage.uploadFile(`transcripts/${article.guid}.txt`, Buffer.from(script), "text/plain; charset=utf-8");
+      } catch (e) {
+        console.warn(`[produce] transcript upload failed: ${(e as Error).message}`);
+      }
     }
     return {
       id: article.guid,
@@ -74,6 +76,33 @@ export class EpisodeProducer {
       audioBytes: audio.length,
       group: article.group,
     };
+  }
+}
+
+/**
+ * 对话集逐字稿双份上传:.txt(纯文本,旧播放器/文稿按钮)+ .json(逐行结构,
+ * 播放器字幕面板用,含逐行英文翻译,翻译失败降级为仅中文)。失败只警告不抛出。
+ * EpisodeProducer 与 index.ts 的今日速览共用。
+ */
+export async function uploadTranscripts(
+  storage: ObjectStore,
+  id: string,
+  dialogue: DialogueLine[],
+  rewriteCfg: RewriteConfig,
+): Promise<void> {
+  try {
+    const doc = dialogue.map((l) => (l.speaker === 0 ? "A: " : "B: ") + l.text).join("\n\n");
+    await storage.uploadFile(`transcripts/${id}.txt`, Buffer.from(doc), "text/plain; charset=utf-8");
+    const en = await translateLinesEn(dialogue.map((l) => l.text), rewriteCfg);
+    if (!en) console.warn(`[produce] transcript translation failed for ${id}, zh-only subtitles`);
+    const lines = dialogue.map((l, i) => ({ sp: l.speaker, zh: l.text, ...(en ? { en: en[i] } : {}) }));
+    await storage.uploadFile(
+      `transcripts/${id}.json`,
+      Buffer.from(JSON.stringify({ v: 1, lines })),
+      "application/json; charset=utf-8",
+    );
+  } catch (e) {
+    console.warn(`[produce] transcript upload failed: ${(e as Error).message}`);
   }
 }
 
@@ -112,12 +141,14 @@ export async function publishFeed(
 ): Promise<string> {
   const allEpisodes = [...newEpisodes, ...state.episodes];
   state.episodes = allEpisodes.slice(0, config.feedEpisodeCount);
-  // 被挤出 feed 的旧集连同音频、逐字稿一起清掉,防止 bucket 无限膨胀
+  // 被挤出 feed 的旧集连同音频、逐字稿(.txt/.json)一起清掉,防止 bucket 无限膨胀
   for (const dropped of allEpisodes.slice(config.feedEpisodeCount)) {
     await storage.delete(dropped.audioPath);
-    await storage
-      .delete(dropped.audioPath.replace(/^episodes\//, "transcripts/").replace(/\.mp3$/, ".txt"))
-      .catch(() => {});
+    for (const ext of [".txt", ".json"]) {
+      await storage
+        .delete(dropped.audioPath.replace(/^episodes\//, "transcripts/").replace(/\.mp3$/, ext))
+        .catch(() => {});
+    }
     console.log(`[pipeline] pruned old episode: ${dropped.title}`);
   }
   await storage.saveState(state);

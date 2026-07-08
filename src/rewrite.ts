@@ -130,6 +130,39 @@ export async function translateChunkZh(text: string, config: RewriteConfig): Pro
   return null;
 }
 
+const LINES_EN_PROMPT = `把下面的中文播客对话逐行翻译成英文(听众用来对照学习的字幕)。每行以「序号. 」开头。
+要求:
+- 输出行数与输入完全相同,每行以相同的「序号. 」开头,后接该行英文译文
+- 自然口语英文;产品名/人名/公司名保留原样
+- 只输出译文行,不要任何其他内容(不要说明、不要 markdown)
+
+对话:
+{content}`;
+
+/**
+ * 对话稿逐行英译(双语字幕用),输出与输入等长的英文行数组;
+ * 行数对不上或通道失败返回 null,调用方降级为仅中文。
+ */
+export async function translateLinesEn(
+  lines: string[],
+  config: RewriteConfig,
+): Promise<string[] | null> {
+  if (!lines.length) return null;
+  const content = lines.map((l, i) => `${i + 1}. ${l}`).join("\n");
+  for (let att = 1; att <= 2; att++) {
+    const out = await compatChat(LINES_EN_PROMPT.replace("{content}", content), config);
+    if (!out) continue;
+    const byNo = new Map<number, string>();
+    for (const raw of out.split("\n")) {
+      const m = /^\s*(\d+)[.。、::]\s*(.+)$/.exec(raw.trim());
+      if (m) byNo.set(Number(m[1]), m[2].trim());
+    }
+    if (lines.every((_, i) => byNo.has(i + 1))) return lines.map((_, i) => byNo.get(i + 1)!);
+    console.warn(`[translate-lines] attempt ${att}: got ${byNo.size}/${lines.length} lines, retrying`);
+  }
+  return null;
+}
+
 const BOOK_INTRO_PROMPT_EN = `You write scripts for a two-host book podcast. Write the dialogue script for an "introduction" episode about "{name}" (about 900-1400 words, 8-12 minutes). Listeners will then hear the book itself read aloud part by part; this intro helps them decide whether to listen and what to listen for.
 
 Roles: A is the host, curious but has not read the book; B has read the whole book.

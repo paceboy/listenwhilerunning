@@ -3,7 +3,7 @@
    - feed.xml / books.json:network-first,离线退缓存
    - mp3:cache-first(听过的/预取的离线可听),上限 40 个 LRU
    页面在 feed 加载后 postMessage 预取最新几集,出门前打开一次即可离线听。 */
-var SHELL = 'shell-v8';
+var SHELL = 'shell-v9';
 var DATA = 'data-v1';
 var MEDIA = 'media-v1';
 var MEDIA_MAX = 40;

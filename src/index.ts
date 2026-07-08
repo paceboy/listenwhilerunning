@@ -6,7 +6,7 @@ import { fetchUrlArticle, urlGuid } from "./urlArticle.js";
 import { briefScript } from "./rewrite.js";
 import { clearInbox, failInbox, readInbox } from "./inbox.js";
 import { DialogueTts, parseDialogue } from "./tts.js";
-import { EpisodeProducer, ensureCover, makeRewriteConfig, publishFeed, resolveRemoteConfig } from "./produce.js";
+import { EpisodeProducer, ensureCover, makeRewriteConfig, publishFeed, resolveRemoteConfig, uploadTranscripts } from "./produce.js";
 import { syncBooksAll } from "./syncBooks.js";
 import { acquireLock } from "./lock.js";
 import type { AppConfig, Article, Episode } from "./types.js";
@@ -167,10 +167,7 @@ async function main() {
           const audio = await tts.synthesize(dialogue);
           const audioPath = `episodes/${briefId}.mp3`;
           await storage.uploadAudio(audioPath, audio);
-          try {
-            const doc = dialogue.map((l) => (l.speaker === 0 ? "A: " : "B: ") + l.text).join("\n\n");
-            await storage.uploadFile(`transcripts/${briefId}.txt`, Buffer.from(doc), "text/plain; charset=utf-8");
-          } catch {}
+          await uploadTranscripts(storage, briefId, dialogue, makeRewriteConfig(config));
           newEpisodes.unshift({
             id: briefId,
             title: `今日速览 · ${newEpisodes.length} 条(${+today.slice(5, 7)}月${+today.slice(8, 10)}日)`,
