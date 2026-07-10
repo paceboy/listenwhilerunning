@@ -1,6 +1,6 @@
 # listenwhilerunning · 跑步听什么
 
-Turn **your own RSS feeds and ebooks** into a personal podcast you can binge on runs and commutes — open source, zero backend, roughly **$0/month**.
+Turn **your own RSS feeds and ebooks** into a personal podcast you can binge on runs and commutes — an **open-source NotebookLM Audio Overview alternative** and **epub/PDF to audiobook** pipeline. Zero backend, no subscription, roughly **$0/month**.
 
 **[Live demo](https://demo.runcast.app)** · [Website](https://runcast.app) · [中文文档 ↓](#中文)
 

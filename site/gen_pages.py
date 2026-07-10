@@ -44,6 +44,12 @@ details p{color:var(--dim);font-size:.93em;margin:8px 0 0}
 footer{border-top:1px solid var(--line);padding-top:20px;color:var(--dim);font-size:.85em}
 footer a{color:var(--acc2);margin-right:10px}
 a{color:var(--acc2)}
+.tblwrap{overflow-x:auto;margin:0 0 14px}
+table{width:100%;border-collapse:collapse;font-size:.9em;line-height:1.5}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--card2)}
+td:first-child{color:var(--dim);white-space:nowrap}
+.note{color:var(--dim);font-size:.85em}
 """
 
 def faq_jsonld(faqs):
@@ -123,9 +129,9 @@ dict(slug="rss-to-podcast", short="RSS to podcast",
  ]),
 
 dict(slug="epub-to-audiobook", short="Epub to audiobook",
- title="Convert Epub to Audiobook Free with AI (Open Source)",
- desc="Turn any epub into a serialized audiobook with neural AI voices, free and open source. Upload from your phone, start listening in minutes, get an AI-generated intro episode discussing the book.",
- h1="Convert Epub to Audiobook — Free, AI Voices, Open Source",
+ title="Epub to Audiobook Free — Open Source, No Subscription",
+ desc="Convert any epub to an audiobook free, with no subscription: an open-source AI pipeline with neural voices. Comparison vs paid tools (tts.ai, Éist), phone upload, listening starts in minutes.",
+ h1="Convert Epub to Audiobook — Free, No Subscription, Open Source",
  lede="Most books never get an audiobook edition, and commercial conversions charge per book. With a modern neural TTS pipeline you can convert your own epubs into serialized audiobooks for free — and start listening minutes after upload.",
  body="""
 <h2>From epub to a listenable series, not one giant file</h2>
@@ -136,12 +142,26 @@ dict(slug="epub-to-audiobook", short="Epub to audiobook",
 <p>Before episode one, the pipeline generates a bonus episode where two AI hosts discuss the book: what it argues, why it's worth your time, and what questions to keep in mind. It's a surprisingly good way to decide whether to commit ten hours to a book.</p>
 <h2>Cross-language listening</h2>
 <p>The pipeline detects the book's language and picks a matching neural voice automatically. There's also a whole-book translation command: feed it an English epub and listen to it as a Chinese audiobook (or configure any language pair your LLM supports).</p>
+<h2>Epub to audiobook without a subscription: how the paid tools compare</h2>
+<p>Most epub-to-audiobook converters meter you by characters or library size, so a full book — typically 300,000–600,000 characters — effectively requires a paid plan. An open-source pipeline on your own accounts has nobody to bill you:</p>
+<div class="tblwrap"><table>
+<tr><th></th><th>listenwhilerunning (this project)</th><th>tts.ai</th><th>Éist (eist.app)</th></tr>
+<tr><td>Price</td><td>$0 — runs on your own free-tier accounts</td><td>Free tier 10,000 chars/month; plans $5–$99/mo by character quota</td><td>Free with 1 book in library at a time; Premium $4.99/mo</td></tr>
+<tr><td>Full books without paying</td><td>Yes, unlimited</td><td>No — one book exceeds the free monthly quota many times over</td><td>One at a time (unlimited hours on that book)</td></tr>
+<tr><td>Open source</td><td>Yes, AGPL-3.0</td><td>No (proprietary platform)</td><td>No</td></tr>
+<tr><td>Self-hosted / your storage</td><td>Yes — your own Cloudflare R2 bucket, plain MP3s, no DRM</td><td>Self-hosted Docker offered from $99/mo</td><td>No — iOS/Android app, audio stays on device</td></tr>
+<tr><td>Delivery</td><td>Standard podcast RSS: any podcast app, resume, lock-screen controls</td><td>In-app / download</td><td>In-app player with word sync and speed-reading mode</td></tr>
+<tr><td>Extras</td><td>AI two-host intro episode, per-episode summaries, whole-book translation</td><td>Large voice/model catalog</td><td>Fully offline, on-device synthesis (a real privacy plus)</td></tr>
+</table></div>
+<p class="note">Pricing and limits checked on the vendors' public pages in July 2026 — see their sites for current details. Both are legitimate tools; the difference is a product you rent vs. a pipeline you own.</p>
 """,
  faqs=[
  ("Which formats are supported?",
   "epub, txt, and html directly. For mobi/azw3, convert to epub first with Calibre (one click)."),
  ("How natural do the voices sound?",
   "It uses Microsoft's neural voices (the same family behind Edge's Read Aloud), which are close to human narration for most prose. For commercial use you can swap in any TTS provider via a small interface."),
+ ("Can I really convert epub to audiobook without a subscription?",
+  "Yes — the pipeline is AGPL open source and runs on your own Cloudflare free tier; the default neural voices are free for personal use. There is no plan, quota, or per-book fee, because there is no service in the middle."),
  ("Is this legal?",
   "Converting books you own for personal listening is generally fine. The tool is self-hosted and private by design — your files never leave your own storage."),
  ]),
@@ -154,14 +174,18 @@ dict(slug="notebooklm-alternative", short="NotebookLM alternative",
  body="""
 <h2>The core difference: a pipeline, not a button</h2>
 <p>With NotebookLM you upload a document, click, wait, and download. Repeat for every document, every day. listenwhilerunning inverts this: you declare your sources once — RSS feeds, subreddits, a folder of ebooks — and a pipeline generates audio on schedule, publishing everything to one private podcast feed your podcast app already follows. New audio just appears.</p>
-<h2>Feature comparison</h2>
-<ul>
-<li><b>Automation:</b> daily cron pipeline vs. manual per-document generation.</li>
-<li><b>Delivery:</b> standard podcast RSS (works in Apple Podcasts, lock-screen controls, position sync) vs. in-app playback.</li>
-<li><b>Books:</b> whole epubs become serialized audiobooks with an AI intro episode — not a single overview of a document.</li>
-<li><b>Openness:</b> AGPL-3.0 source, your own storage and API keys, any OpenAI-compatible LLM. No product to be discontinued out from under you.</li>
-<li><b>Cost:</b> Cloudflare free tier + pennies of LLM usage, instead of a Google subscription tier.</li>
-</ul>
+<h2>listenwhilerunning vs NotebookLM, side by side</h2>
+<div class="tblwrap"><table>
+<tr><th></th><th>listenwhilerunning</th><th>NotebookLM Audio Overview</th></tr>
+<tr><td>Workflow</td><td>Declare sources once; a daily pipeline generates audio automatically</td><td>Upload a document and click Generate, per document</td></tr>
+<tr><td>Delivery</td><td>Standard podcast RSS — Apple Podcasts, lock-screen controls, resume everywhere</td><td>In-app playback (plus download)</td></tr>
+<tr><td>Whole books</td><td>Epub/PDF becomes a serialized audiobook with an AI hosts' intro episode</td><td>A single overview of the document</td></tr>
+<tr><td>Interactive Q&amp;A</td><td>No — you can't interrupt the hosts</td><td>Yes, interactive mode with questions</td></tr>
+<tr><td>Multi-document research</td><td>No — it's a listening pipeline, not a research notebook</td><td>Yes, deep grounding across a source set</td></tr>
+<tr><td>Openness</td><td>AGPL-3.0 source; your storage, your API keys, any OpenAI-compatible LLM</td><td>Closed; lives inside your Google account</td></tr>
+<tr><td>Account required</td><td>None — no login, no vendor in the loop</td><td>Google account</td></tr>
+<tr><td>Cost</td><td>Cloudflare free tier + pennies of LLM usage (~$0/mo)</td><td>Free tier with limits; higher limits via Google AI subscription tiers</td></tr>
+</table></div>
 <h2>What NotebookLM still does better</h2>
 <p>Fairness matters: NotebookLM's interactive mode (interrupting the hosts to ask questions) and its deep multi-document grounding are ahead. If you need conversational Q&A over a research corpus, use NotebookLM. If you want your <em>daily information diet</em> turned into audio automatically, that's what this project is for.</p>
 """,
@@ -486,6 +510,40 @@ dict(slug="notebooklm-audio-overview", short="Audio Overview explained",
   "Same two-host format and pacing; voices depend on the TTS you configure (default: Microsoft neural voices, free for personal use)."),
  ("Is my content sent to Google?",
   "No — the pipeline runs on your accounts with your chosen LLM endpoint and your own storage."),
+ ]),
+
+dict(slug="ai-podcast-generator-for-studying", short="Podcasts for studying",
+ title="AI Podcast Generator for Studying: Turn Course Material into Audio",
+ desc="Use an open-source AI podcast generator for studying: textbooks, papers, and lecture notes become two-host dialogue episodes you can review on walks and commutes. Free, self-hosted, no subscription.",
+ h1="An AI Podcast Generator for Studying (Textbooks, Papers, Notes)",
+ lede="Re-reading a chapter the night before an exam is the least effective hour in studying. Hearing two hosts argue through the same material while you walk to class is a different kind of pass — and you can generate it from your own course material, free.",
+ body="""
+<h2>Why dialogue beats read-aloud for review</h2>
+<p>Single-voice TTS of a textbook is a lullaby. The two-host format — one explains, the other pushes back, asks the dumb question, summarizes — keeps you processing instead of drifting, because questions create small prediction moments: you answer in your head before the host does. That's also why NotebookLM's Audio Overview became a study-tool phenomenon. This is the same format, generated automatically from your material, on your own accounts.</p>
+<h2>What to feed it</h2>
+<ul>
+<li><b>Textbooks:</b> upload the epub or PDF; each chapter becomes ~10-minute episodes with a one-line summary, plus an intro episode where the hosts discuss what the book covers — a genuinely useful pre-reading pass.</li>
+<li><b>Papers:</b> paste the URL (or upload the PDF) and it becomes a single dialogue episode within minutes — queue tomorrow's seminar readings the night before.</li>
+<li><b>The field itself:</b> add your subject's blogs, arXiv categories, or subreddits as RSS sources; every morning you get a short dialogue digest of what's new. Passive immersion between deadlines.</li>
+</ul>
+<h2>A study loop that survives the semester</h2>
+<ol>
+<li>Night before: upload readings from your phone; the pipeline generates while you sleep.</li>
+<li>Commute/walk/gym: listen in any podcast app — resume, speed control (1.5x works well for review), lock-screen skip.</li>
+<li>Before the exam: replay the intro and summary episodes instead of re-reading whole chapters; tap through to the source text (kept in every episode's notes) for anything you need verbatim.</li>
+</ol>
+<h2>Why free matters for students specifically</h2>
+<p>Study-audio apps price per book or per month — exactly wrong for someone converting one textbook per course on a student budget. This pipeline is AGPL open source and fits in Cloudflare's free tier; the optional LLM cost is pennies per day. Set it up once in a dorm evening, use it until graduation.</p>
+""",
+ faqs=[
+ ("Can it turn lecture slides or notes into a podcast?",
+  "Yes — export them as PDF, txt, or html and upload. Prose-heavy material works best; dense formula sheets are better reviewed visually."),
+ ("Is listening as effective as reading for studying?",
+  "They complement each other: audio is excellent for priming before reading and spaced review after, less good for problem sets and math. The dialogue format helps because questions force micro-recall while you listen."),
+ ("Do I need a powerful computer or a paid plan?",
+  "Neither. It's an orchestration pipeline — TTS and LLM are API calls, storage is Cloudflare's free tier, and the daily job can run on GitHub Actions' free minutes."),
+ ("Can it handle non-English course material?",
+  "Yes — language is auto-detected per book/article and voices switch accordingly; there's also a whole-book translation mode for studying material across languages."),
  ]),
 ]
 
