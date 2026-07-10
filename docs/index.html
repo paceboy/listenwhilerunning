@@ -119,6 +119,7 @@
   .newsg .glist { padding: 0 10px 12px; }
   .doc { margin-left: auto; color: var(--dim); border: 1px solid var(--line); padding: 1px 8px; border-radius: 999px; cursor: pointer; flex: none; }
   li.playing .doc, .doc:active { color: var(--acc); border-color: var(--acc); }
+  a.doc { margin-left: 6px; text-decoration: none; }
   .script { margin-top: 10px; padding: 10px 12px; background: var(--card2); border-radius: 10px; font-size: .82em; line-height: 1.7; color: var(--dim); white-space: pre-wrap; max-height: 40vh; overflow-y: auto; cursor: auto; }
   .script .ln { margin-bottom: 8px; }
   .en { display: block; font-size: .9em; opacity: .8; }
@@ -282,7 +283,7 @@ var I18N = {
     untitled: '(无标题)', unknownSrc: '未知来源', groupOther: '其他',
     sortGroup: '排序:按板块', sortTime: '排序:按时间',
     epCount: '共 {n} 集,播完自动连播', feedEmpty: 'feed 里还没有内容', feedFail: '加载 feed 失败:',
-    btnDoc: '文稿', noDoc: '这一集还没有文稿(旧集或生成时未保存)',
+    btnDoc: '文稿', noDoc: '这一集还没有文稿(旧集或生成时未保存)', btnSrc: '原文',
     btnSubs: '字幕',
     noBooks: '还没有书。',
     booksPendingHint: '书籍清单还没生成(首次全书转音频约需 1-2 小时,期间刷新本页可见已完成的集数)。',
@@ -333,7 +334,7 @@ var I18N = {
     untitled: '(untitled)', unknownSrc: 'unknown source', groupOther: 'Other',
     sortGroup: 'Sort: by topic', sortTime: 'Sort: by time',
     epCount: '{n} episodes; plays on to the next automatically', feedEmpty: 'No episodes in the feed yet', feedFail: 'Failed to load feed: ',
-    btnDoc: 'Text', noDoc: 'No transcript for this episode (generated before transcripts existed)',
+    btnDoc: 'Text', noDoc: 'No transcript for this episode (generated before transcripts existed)', btnSrc: 'Source',
     btnSubs: 'Subtitles',
     noBooks: 'No books yet.',
     booksPendingHint: 'Book list not generated yet (a full book takes ~1–2 hours on first run; refresh to see finished parts).',
@@ -858,6 +859,17 @@ function renderNews() {
     doc.textContent = t('btnDoc');
     doc.onclick = (function (u) { return function (ev) { ev.stopPropagation(); toggleDoc(li, u); }; })(e.url);
     li.querySelector('.m').appendChild(doc);
+    // 原文链接:feed 里 link 为空时回退成音频 URL(如速览),与 enclosure 相同则不展示
+    if (e.link && e.link !== e.url) {
+      var src = document.createElement('a');
+      src.className = 'doc';
+      src.textContent = t('btnSrc');
+      src.href = e.link;
+      src.target = '_blank';
+      src.rel = 'noopener';
+      src.onclick = function (ev) { ev.stopPropagation(); };
+      li.querySelector('.m').appendChild(src);
+    }
     li.onclick = (function (idx) { return function () { play(newsItems, idx); }; })(newsItems.length);
     (container || listEl).appendChild(li);
     newsItems.push(item);
@@ -936,6 +948,7 @@ if (BASE) fetch(BASE + 'feed.xml').then(function (r) { return r.text(); }).then(
       src: (node.getElementsByTagName('itunes:author')[0] || {}).textContent || '',
       pub: (node.querySelector('pubDate') || {}).textContent || '',
       group: (node.querySelector('category') || {}).textContent || '',
+      link: (node.querySelector('link') || {}).textContent || '',
       url: enc.getAttribute('url'),
       bytes: +enc.getAttribute('length')
     });
