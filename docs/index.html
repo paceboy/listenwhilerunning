@@ -919,6 +919,9 @@ var newsSort = localStorage.getItem('lwr-newsort') || 'group';
 // 折叠的板块名集合,持久化;折叠只影响显示,连播顺序不变
 var newsFold = {};
 try { JSON.parse(localStorage.getItem('lwr-newsfold') || '[]').forEach(function (g) { newsFold[g] = 1; }); } catch (e) {}
+// 书籍卡默认折叠,只记住用户手动展开过的(与资讯相反:资讯默认展开、记折叠的)
+var bookOpen = {};
+try { JSON.parse(localStorage.getItem('lwr-bookopen') || '[]').forEach(function (id) { bookOpen[id] = 1; }); } catch (e) {}
 function renderNews() {
   if (feedTitle) { document.title = feedTitle; document.getElementById('title').textContent = feedTitle; }
   function addEntry(e, container) {
@@ -1043,7 +1046,11 @@ function renderBooks() {
   booksData.books.forEach(function (b, bi) {
     var card = document.createElement('details');
     card.className = 'book';
-    if (bi === 0) card.open = true;
+    card.open = !!bookOpen[b.id];
+    card.ontoggle = (function (id) { return function () {
+      if (this.open) bookOpen[id] = 1; else delete bookOpen[id];
+      localStorage.setItem('lwr-bookopen', JSON.stringify(Object.keys(bookOpen)));
+    }; })(b.id);
     var parts = [];
     bookPartLists.push(parts);
     var head = document.createElement('summary');
