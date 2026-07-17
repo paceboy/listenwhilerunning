@@ -226,6 +226,14 @@
     <div class="msg" id="qMsg"></div>
   </div>
   <div class="card">
+    <h2><span data-i18n="cardGut">搜公版书</span> <button class="qm" aria-label="?">?</button></h2>
+    <div class="help" data-i18n="helpGut"></div>
+    <input id="gutQ" data-i18n-ph="phGut" placeholder="">
+    <button class="resume" id="gutSearch" data-i18n="btnGutSearch">搜索</button>
+    <div id="gutResults" style="margin-top:8px"></div>
+    <div class="msg" id="gutMsg"></div>
+  </div>
+  <div class="card">
     <h2><span data-i18n="cardBook">上传电子书</span> <button class="qm" aria-label="?">?</button></h2>
     <div class="help" data-i18n="helpBook"></div>
     <input type="file" id="bookFile" accept=".epub,.txt,.html,.htm,.pdf,.mobi,.azw,.azw3,.fb2,.docx,application/epub+zip,application/pdf,text/plain,text/html,application/x-mobipocket-ebook,application/vnd.amazon.ebook">
@@ -261,6 +269,15 @@ var I18N = {
     cardUrl: '转单篇文章',
     helpUrl: '看到一篇好文章,想用耳朵听?把<b>文章链接</b>贴进来,<b>几分钟内</b>就会转成一集音频,出现在「资讯」列表里,<b>不占每天的名额</b>。<br>例:<b>https://mp.weixin.qq.com/s/xxxx</b> 或任意博客/新闻页链接。(需要先填上面的管理口令)',
     phUrl: 'https:// 文章链接', btnSendUrl: '转成一集(几分钟内生成)',
+    cardGut: '搜公版书',
+    helpGut: '不用自己找文件:搜 <b>Project Gutenberg</b>(古登堡计划,7.5 万+ 本<b>版权已过期</b>的公版书,合法免费),点「下载并转换」就会存进服务器、<b>几分钟后</b>自动转成有声书连载,出现在「书籍」标签页。中文古籍搜不到时试<b>罗马字或英文名</b>(如「hong lou meng」)——古登堡搜索框对中文字符支持较差。<b>只收录公版书</b>,版权期内的书搜不到,请用上传功能。(需要先填上面的管理口令)',
+    phGut: '书名或作者,如 pride prejudice / Jane Austen',
+    btnGutSearch: '搜索',
+    gutBtnGet: '下载并转换',
+    gutDownloads: '{n} 次下载',
+    gutSearching: '搜索中…', gutNoResult: '没搜到,换个关键词(作者姓、英文/罗马字书名)试试',
+    gutGetting: '下载中「{t}」…', gutQueued: '已加入转换队列「{n}」,几分钟后开始生成,书籍页从第 1 集就能边生成边听',
+    gutFail: '出错:',
     cardBook: '上传电子书',
     helpBook: '把自己的电子书变成<b>有声书连载</b>:选一个 <b>.epub / .mobi / .azw3 / .pdf / .txt</b> 等文件(50MB 以内)上传,<b>几分钟后</b>自动开始转音频,出现在「书籍」标签页。生成比播放快十倍左右,<b>从第 1 集听起就能边生成边听</b>,还会配一集两位主播的导读。英文书自动用英文声音朗读;想听中文可在服务器上跑 <b>npm run books:translate</b> 先整本翻译。删除书籍在服务器上执行 <b>npm run books:remove</b>。(需要先填上面的管理口令)',
     btnUpBook: '上传(几分钟后可边生成边听)',
@@ -312,6 +329,15 @@ var I18N = {
     cardUrl: 'Convert one article',
     helpUrl: 'Found a good read and want to listen instead? Paste the <b>article URL</b> — it becomes an audio episode <b>within minutes</b> in the News tab, <b>without using the daily quota</b>.<br>Example: any blog or news page URL. (Requires the admin token above.)',
     phUrl: 'https:// article URL', btnSendUrl: 'Convert to an episode (ready in minutes)',
+    cardGut: 'Search public-domain books',
+    helpGut: 'No file to hunt for: search <b>Project Gutenberg</b> (75k+ <b>public-domain</b> books, free and legal) and tap "Download & convert" — it\'s saved to the server and <b>within minutes</b> turns into a serialized audiobook in the Books tab. For Chinese classics try <b>romanized or English titles</b> (e.g. "hong lou meng") — Gutenberg\'s search handles CJK poorly. <b>Public-domain only</b>; in-copyright books won\'t appear here — use Upload for those. (Requires the admin token above.)',
+    phGut: 'Title or author, e.g. pride prejudice / Jane Austen',
+    btnGutSearch: 'Search',
+    gutBtnGet: 'Download & convert',
+    gutDownloads: '{n} downloads',
+    gutSearching: 'Searching…', gutNoResult: 'No results — try an author surname or an English/romanized title',
+    gutGetting: 'Downloading "{t}"…', gutQueued: 'Queued "{n}" — conversion starts within minutes; start listening from part 1 in Books',
+    gutFail: 'Error: ',
     cardBook: 'Upload an ebook',
     helpBook: 'Turn your own ebook into a <b>serialized audiobook</b>: upload one <b>.epub / .mobi / .azw3 / .pdf / .txt</b> (etc.) file (up to 50MB); conversion starts automatically <b>within minutes</b> and episodes appear in the Books tab. Generation runs ~10x faster than playback, so <b>you can start listening from part 1 while the rest converts</b> — plus an AI "two hosts discuss this book" intro episode. English books are narrated with English voices automatically. To delete a book run <b>npm run books:remove</b> on the server. (Requires the admin token above.)',
     btnUpBook: 'Upload (listen while it converts)',
@@ -706,6 +732,54 @@ document.getElementById('sendUrl').onclick = function () {
     .then(function (d) { msg(qMsg, tf('queued', { n: d.queued })); document.getElementById('oneUrl').value = ''; })
     .catch(function (e) { msg(qMsg, t('queueFail') + e.message, true); });
 };
+// ---- 搜公版书(Project Gutenberg)----
+var gutMsg = document.getElementById('gutMsg');
+var gutResults = document.getElementById('gutResults');
+function gutDownload(book, btn) {
+  btn.disabled = true;
+  msg(gutMsg, tf('gutGetting', { t: book.title }));
+  fetch('/api/gutenberg', { method: 'POST', headers: admHeaders(true), body: JSON.stringify({ id: book.id, title: book.title }) })
+    .then(function (r) { if (!r.ok) throw new Error(r.status === 401 ? t('tokFirst') : 'HTTP ' + r.status); return r.json(); })
+    .then(function (d) {
+      if (d.error) throw new Error(d.error);
+      msg(gutMsg, tf('gutQueued', { n: d.queued }));
+      loadPendingBooks();
+    })
+    .catch(function (e) { msg(gutMsg, t('gutFail') + e.message, true); btn.disabled = false; });
+}
+function runGutSearch() {
+  var q = document.getElementById('gutQ').value.trim();
+  if (!q) return;
+  if (!admTok.value) { msg(gutMsg, t('needTok'), true); return; }
+  gutResults.innerHTML = '';
+  msg(gutMsg, t('gutSearching'));
+  fetch('/api/gutenberg?q=' + encodeURIComponent(q), { headers: admHeaders() })
+    .then(function (r) { if (!r.ok) throw new Error(r.status === 401 ? t('badTok') : 'HTTP ' + r.status); return r.json(); })
+    .then(function (d) {
+      if (d.error) throw new Error(d.error);
+      var list = d.results || [];
+      if (!list.length) { msg(gutMsg, t('gutNoResult'), true); return; }
+      msg(gutMsg, '');
+      list.forEach(function (book) {
+        var row = document.createElement('div');
+        row.className = 'srcrow';
+        var meta = document.createElement('span');
+        meta.style.flex = '1';
+        meta.style.fontSize = '13px';
+        meta.textContent = book.title + (book.author ? ' — ' + book.author : '') +
+          '  (' + tf('gutDownloads', { n: book.downloads.toLocaleString() }) + ')';
+        var btn = document.createElement('button');
+        btn.className = 'pill';
+        btn.textContent = t('gutBtnGet');
+        btn.onclick = function () { gutDownload(book, btn); };
+        row.appendChild(meta); row.appendChild(btn);
+        gutResults.appendChild(row);
+      });
+    })
+    .catch(function (e) { msg(gutMsg, t('gutFail') + e.message, true); });
+}
+document.getElementById('gutSearch').onclick = runGutSearch;
+document.getElementById('gutQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') runGutSearch(); });
 
 // ---- 语言应用与切换 ----
 function applyLang() {
