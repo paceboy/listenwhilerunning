@@ -10,6 +10,7 @@
     "add": "tsx src/addUrl.ts",
     "books:sync": "tsx src/syncBooks.ts",
     "books:translate": "tsx src/translateBook.ts",
+    "books:find": "tsx src/findBook.ts",
     "books:remove": "tsx src/removeBook.ts",
     "books:feeds": "tsx src/bookFeeds.ts",
     "poll": "tsx src/poll.ts",

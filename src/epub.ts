@@ -44,5 +44,17 @@ export function epubToText(file: string): string {
     if (text.length > 50) parts.push(text);
   }
   if (parts.length === 0) throw new Error(`${file}: no readable chapters in spine`);
-  return parts.join("\n\n");
+  return stripGutenbergBoilerplate(parts.join("\n\n"));
+}
+
+/**
+ * Project Gutenberg 电子书正文前后包着许可声明,会被念进音频。
+ * 正文夹在 `*** START OF THE PROJECT GUTENBERG EBOOK … ***` 与 `*** END OF … ***` 之间,
+ * 两个标记都在时剥掉外层;非 Gutenberg 书没有这对标记,原样返回。
+ */
+function stripGutenbergBoilerplate(text: string): string {
+  const start = text.match(/\*\*\*\s*START OF TH(?:E|IS) PROJECT GUTENBERG EBOOK[\s\S]*?\*\*\*/i);
+  const end = text.match(/\*\*\*\s*END OF TH(?:E|IS) PROJECT GUTENBERG EBOOK[\s\S]*?\*\*\*/i);
+  if (start?.index === undefined || end?.index === undefined || end.index <= start.index) return text;
+  return text.slice(start.index + start[0].length, end.index).trim();
 }
