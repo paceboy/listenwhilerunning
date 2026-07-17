@@ -89,6 +89,7 @@ docs/             player (static PWA);  functions/  settings API (Pages Function
 ## FAQ
 
 - **My favorite site has no RSS?** Self-host [RSSHub](https://docs.rsshub.app/) — nearly everything gets a feed
+- **Follow someone on Twitter/X?** Add their profile URL (e.g. `https://x.com/naval`) as a source — recent tweets get bundled into one episode per day. Requires a [spiderhubs.com](https://www.spiderhubs.com) API key in `.env` (`SPIDERHUBS_API_KEY`); without it, Twitter sources are simply skipped
 - **Edge TTS returns empty audio?** Microsoft-side throttling; there's built-in 5-attempt quadratic backoff. Wrap long jobs in a retry loop (systemd unit) for extra safety
 - **Dialogue quality not to your taste?** Edit the prompts in `src/rewrite.ts`; set `newsStyle: "narration"` in `config.json` for single-voice readout
 - **Change voices?** `voice` / `dialogueVoices` in `config.json`; list voices with `edge-tts --list-voices`
@@ -139,6 +140,7 @@ npm run pipeline          # 生成第一批资讯(config.json 改成你自己的
 ### 常见问题
 
 - **知乎/公众号没有 RSS?** 自托管 [RSSHub](https://docs.rsshub.app/) 或 [wewe-rss](https://github.com/cooderl/wewe-rss)
+- **想听 Twitter/X 博主?** 订阅源地址直接填主页 URL(如 `https://x.com/naval`),该账号近几天推文每天聚合成一集;需在 `.env` 配 [spiderhubs.com](https://www.spiderhubs.com) 的 `SPIDERHUBS_API_KEY`,不配则 Twitter 源自动跳过
 - **Edge TTS 报 empty audio?** 微软端节流,内置 5 次二次方退避;长任务建议 systemd 单元包失败冷却重试
 - **对话质量不满意?** 改 `src/rewrite.ts` 的 prompt;`config.json` 的 `newsStyle` 改 `narration` 即单人直读
 - **换声音?** `config.json` 的 `voice` / `dialogueVoices`

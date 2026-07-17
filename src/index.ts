@@ -63,7 +63,7 @@ async function main() {
   const state = await storage.loadState();
   const seen = new Set(state.seen);
 
-  const articles = await fetchArticles(config.sources);
+  const articles = await fetchArticles(config.sources, seen);
   const fresh = pickRoundRobin(
     articles.filter((a) => !seen.has(a.guid) && a.text.length > 100),
     limit,
@@ -130,18 +130,23 @@ async function main() {
       } catch (e) {
         console.error(`[pipeline] failed for "${article.title}": ${(e as Error).message}`);
       }
+      // 聚合型文章(推文合集)连子条目指纹一起标已见,窗口内不重复收
+      const markSeen = () => {
+        seen.add(article.guid);
+        for (const g of article.extraGuids ?? []) seen.add(g);
+      };
       const ib = inboxByGuid.get(article.guid);
       if (ib) {
         // 邮件是唯一副本:失败不标已见、留桶重试(3 次后放弃),成功才删
         if (ok) {
-          seen.add(article.guid);
+          markSeen();
           doneInbox.push(ib);
         } else if (priv) {
           await failInbox(priv, ib);
         }
       } else {
         // 资讯/投递 URL 无论成败都标记已见,坏文章不重试,避免每天卡在同一篇上
-        seen.add(article.guid);
+        markSeen();
       }
     }
 

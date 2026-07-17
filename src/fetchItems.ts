@@ -1,5 +1,6 @@
 import Parser from "rss-parser";
 import { createHash } from "node:crypto";
+import { fetchTwitterArticle, twitterScreenName } from "./twitter.js";
 import type { Article, SourceConfig } from "./types.js";
 
 // Reddit 的 .rss 端点会拒默认 UA,统一带浏览器 UA
@@ -36,11 +37,22 @@ async function fetchFeed(url: string) {
   }
 }
 
-export async function fetchArticles(sources: SourceConfig[]): Promise<Article[]> {
+export async function fetchArticles(
+  sources: SourceConfig[],
+  seen: ReadonlySet<string> = new Set(),
+): Promise<Article[]> {
   const all: Article[] = [];
   let redditFetched = false;
   for (const src of sources) {
     try {
+      // Twitter 主页 URL 不是 RSS,走 spiderhubs API 聚合成单篇(见 twitter.ts)
+      const screenName = twitterScreenName(src.url);
+      if (screenName) {
+        const art = await fetchTwitterArticle(src, screenName, seen);
+        if (art) all.push(art);
+        console.log(`[fetch] ${src.name}: ${art ? art.extraGuids?.length ?? 1 : 0} new tweets`);
+        continue;
+      }
       // Reddit 同 IP 无认证限速很紧,源一多背靠背必 429;主动隔 10s 比撞上后退避 30s 省
       if (/reddit\.com/i.test(src.url)) {
         if (redditFetched) await new Promise((r) => setTimeout(r, 10_000));

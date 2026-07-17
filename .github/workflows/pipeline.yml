@@ -37,3 +37,4 @@ jobs:
           LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
           LLM_MODEL: ${{ secrets.LLM_MODEL }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SPIDERHUBS_API_KEY: ${{ secrets.SPIDERHUBS_API_KEY }}

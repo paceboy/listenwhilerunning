@@ -44,6 +44,8 @@ export interface Article {
   text: string;
   /** 原文即口播稿的内容,跳过 LLM 改写 */
   skipRewrite?: boolean;
+  /** 聚合型文章(如推文合集)的子条目指纹,随文章一起进 seen,按条去重 */
+  extraGuids?: string[];
   group?: string;
 }
 
