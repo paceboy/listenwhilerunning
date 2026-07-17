@@ -3,7 +3,7 @@
    - feed.xml / books.json:network-first,离线退缓存
    - mp3:cache-first(听过的/预取的离线可听),上限 40 个 LRU
    页面在 feed 加载后 postMessage 预取最新几集,出门前打开一次即可离线听。 */
-var SHELL = 'shell-v9';
+var SHELL = 'shell-v10';
 var DATA = 'data-v1';
 var MEDIA = 'media-v1';
 var MEDIA_MAX = 40;
@@ -67,6 +67,11 @@ function sliceResponse(req, res) {
 
 self.addEventListener('fetch', function (e) {
   var url = e.request.url;
+
+  // /api/* 永不进缓存:鉴权 + 动态结果(带 ?q= 查询串)。
+  // 兜底的 stale-while-revalidate 用 ignoreSearch 会让所有查询共用一个键、回放旧响应,
+  // 直接放行走网络。非 GET 同理。
+  if (/\/api\//.test(url) || e.request.method !== 'GET') return;
 
   if (/\.mp3(\?|$)/.test(url)) {
     e.respondWith(caches.open(MEDIA).then(function (cache) {

@@ -48,6 +48,28 @@ function safeName(title) {
   );
 }
 
+// Gutenberg 偶尔给数据中心 IP 弹 Cloudflare 反爬页(无书目条目),重试一次多半就过。
+// 区分三态:命中书目 / 确实空(有结果容器但 0 条)/ 被挑战(整页无容器)。
+async function searchGutenberg(params) {
+  let lastHtml = "";
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await fetch(`${SEARCH}?${params}`, {
+      headers: { "User-Agent": UA },
+      cf: { cacheTtl: 0 },
+    });
+    if (!res.ok) {
+      lastHtml = "";
+      continue;
+    }
+    lastHtml = await res.text();
+    const results = parseResults(lastHtml);
+    if (results.length) return { results };
+    // 有"结果区/无记录"标记 = 页面正常但确实没书;否则视为被挑战,重试
+    if (/booklink|No records|did not match/i.test(lastHtml)) return { results: [] };
+  }
+  return { challenged: !lastHtml || !/booklink|No records/i.test(lastHtml) };
+}
+
 export async function onRequest({ request, env }) {
   const url = new URL(request.url);
 
@@ -57,9 +79,9 @@ export async function onRequest({ request, env }) {
     const params = new URLSearchParams({ query: q, submit_search: "Go!" });
     const lang = url.searchParams.get("lang");
     if (lang) params.set("languages", lang);
-    const res = await fetch(`${SEARCH}?${params}`, { headers: { "User-Agent": UA } });
-    if (!res.ok) return json({ error: `Gutenberg HTTP ${res.status}` }, 502);
-    return json({ results: parseResults(await res.text()) });
+    const out = await searchGutenberg(params);
+    if (out.challenged) return json({ error: "Gutenberg busy, please retry" }, 503);
+    return json({ results: out.results });
   }
 
   if (request.method === "POST") {

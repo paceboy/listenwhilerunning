@@ -275,7 +275,7 @@ var I18N = {
     btnGutSearch: '搜索',
     gutBtnGet: '下载并转换',
     gutDownloads: '{n} 次下载',
-    gutSearching: '搜索中…', gutNoResult: '没搜到,换个关键词(作者姓、英文/罗马字书名)试试',
+    gutSearching: '搜索中…', gutNoResult: '没搜到,换个关键词(作者姓、英文/罗马字书名)试试', gutBusy: 'Gutenberg 一时繁忙,过几秒再点一次搜索',
     gutGetting: '下载中「{t}」…', gutQueued: '已加入转换队列「{n}」,几分钟后开始生成,书籍页从第 1 集就能边生成边听',
     gutFail: '出错:',
     cardBook: '上传电子书',
@@ -335,7 +335,7 @@ var I18N = {
     btnGutSearch: 'Search',
     gutBtnGet: 'Download & convert',
     gutDownloads: '{n} downloads',
-    gutSearching: 'Searching…', gutNoResult: 'No results — try an author surname or an English/romanized title',
+    gutSearching: 'Searching…', gutNoResult: 'No results — try an author surname or an English/romanized title', gutBusy: 'Gutenberg is busy, wait a few seconds and search again',
     gutGetting: 'Downloading "{t}"…', gutQueued: 'Queued "{n}" — conversion starts within minutes; start listening from part 1 in Books',
     gutFail: 'Error: ',
     cardBook: 'Upload an ebook',
@@ -754,7 +754,7 @@ function runGutSearch() {
   gutResults.innerHTML = '';
   msg(gutMsg, t('gutSearching'));
   fetch('/api/gutenberg?q=' + encodeURIComponent(q), { headers: admHeaders() })
-    .then(function (r) { if (!r.ok) throw new Error(r.status === 401 ? t('badTok') : 'HTTP ' + r.status); return r.json(); })
+    .then(function (r) { if (!r.ok) throw new Error(r.status === 401 ? t('badTok') : r.status === 503 ? t('gutBusy') : 'HTTP ' + r.status); return r.json(); })
     .then(function (d) {
       if (d.error) throw new Error(d.error);
       var list = d.results || [];
