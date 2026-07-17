@@ -298,7 +298,7 @@ var I18N = {
     noBase: '未配置存储地址',
     noCfgJs: 'config.js 缺失:在项目里运行 npm run setup 自动生成并重新部署',
     untitled: '(无标题)', unknownSrc: '未知来源', groupOther: '其他',
-    sortGroup: '排序:按板块', sortTime: '排序:按时间',
+    sortGroup: '排序:按板块', sortTime: '排序:时间 新→旧', sortTimeAsc: '排序:时间 旧→新',
     epCount: '共 {n} 集,播完自动连播', feedEmpty: 'feed 里还没有内容', feedFail: '加载 feed 失败:',
     btnDoc: '文稿', noDoc: '这一集还没有文稿(旧集或生成时未保存)', btnSrc: '原文',
     btnSubs: '字幕',
@@ -358,7 +358,7 @@ var I18N = {
     noBase: 'Storage URL not configured',
     noCfgJs: 'config.js missing: run npm run setup in the project to generate it, then redeploy',
     untitled: '(untitled)', unknownSrc: 'unknown source', groupOther: 'Other',
-    sortGroup: 'Sort: by topic', sortTime: 'Sort: by time',
+    sortGroup: 'Sort: by topic', sortTime: 'Sort: newest first', sortTimeAsc: 'Sort: oldest first',
     epCount: '{n} episodes; plays on to the next automatically', feedEmpty: 'No episodes in the feed yet', feedFail: 'Failed to load feed: ',
     btnDoc: 'Text', noDoc: 'No transcript for this episode (generated before transcripts existed)', btnSrc: 'Source',
     btnSubs: 'Subtitles',
@@ -958,18 +958,21 @@ function renderNews() {
     sb.style.textAlign = 'right';
     var btn = document.createElement('button');
     btn.className = 'pill';
-    btn.textContent = t(newsSort === 'time' ? 'sortTime' : 'sortGroup');
+    btn.textContent = t(newsSort === 'time' ? 'sortTime' : newsSort === 'timeAsc' ? 'sortTimeAsc' : 'sortGroup');
     btn.onclick = function () {
-      newsSort = newsSort === 'time' ? 'group' : 'time';
+      // 三态循环:按板块 → 时间新→旧 → 时间旧→新
+      newsSort = newsSort === 'group' ? 'time' : newsSort === 'time' ? 'timeAsc' : 'group';
       localStorage.setItem('lwr-newsort', newsSort);
       listEl.innerHTML = ''; newsItems = []; renderNews(); restorePlaying();
     };
     sb.appendChild(btn);
     listEl.appendChild(sb);
   }
-  if (newsSort === 'time') {
+  if (newsSort === 'time' || newsSort === 'timeAsc') {
+    var asc = newsSort === 'timeAsc';
     feedEntries.slice().sort(function (x, y) {
-      return (Date.parse(y.pub) || 0) - (Date.parse(x.pub) || 0);
+      var d = (Date.parse(x.pub) || 0) - (Date.parse(y.pub) || 0);
+      return asc ? d : -d;
     }).forEach(function (e) { addEntry(e); });
   } else {
     var groups = [];
